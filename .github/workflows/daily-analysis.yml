@@ -26,7 +26,11 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt lxml
+        run: pip install -r requirements-dev.txt lxml
+
+      - name: Run tests
+        # 纯逻辑测试，不触网；失败即阻断，避免用坏掉的计算生成报告
+        run: python -m pytest tests/ -q
 
       - name: Run analysis
         run: python run_analysis.py

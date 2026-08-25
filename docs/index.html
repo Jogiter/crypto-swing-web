@@ -164,14 +164,64 @@ function coinCard(name, cd){
     ${tfrows}
     ${compTable(sc4)}
     <div class="levels">${levelsHtml(f4?.levels)}</div>
+    ${geometryHtml(cd.geometry)}
   </div>`;
+}
+function geometryHtml(g){
+  if(!g || (!g.stops?.length && !g.targets?.length)) return "";
+  const li = [];
+  for(const st of (g.stops||[])){
+    li.push(`<div class="kv"><span class="k">${esc(st.name)}</span><span class="v down">$${fp(st.price)}
+      <span class="lab" style="font-weight:400;color:var(--muted)"> ${esc(st.basis||"")}${st.distance_pct!=null?` · ${st.distance_pct}%`:""}</span></span></div>`);
+  }
+  for(const t of (g.targets||[])){
+    li.push(`<div class="kv"><span class="k">${esc(t.name)} <span class="lab" style="color:var(--muted);font-weight:400">${esc(t.plan||"")}</span></span>
+      <span class="v up">$${fp(t.price)}<span class="lab" style="font-weight:400;color:var(--muted)"> ${esc(t.basis||"")}${t.distance_pct!=null?` · +${t.distance_pct}%`:""}</span></span></div>`);
+  }
+  const rr = g.rr||{};
+  const rrKeys = Object.keys(rr);
+  const rrLine = rrKeys.length
+    ? `<div class="kv"><span class="k">风险回报比</span><span class="v">${rrKeys.map(k=>`${esc(k)} ${rr[k]}:1`).join("　")}</span></div>` : "";
+  const notes = (g.notes||[]).map(n=>`<div class="missing">${esc(n)}</div>`).join("");
+  return `<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--grid)">
+    <div class="lab" style="margin-bottom:6px">交易几何 <span style="color:var(--muted);font-weight:400">· 纯计算，非入场建议</span></div>
+    ${li.join("")}${rrLine}${notes}
+    <div class="note">以现价为参考入场点推导；本工具不判断是否应当入场</div></div>`;
+}
+function conditionsCard(tc){
+  if(!tc || (!tc.offense?.length && !tc.defense?.length)) return "";
+  const block = (items, title) => {
+    if(!items?.length) return "";
+    const rows = items.map(c => `<div class="kv" style="align-items:flex-start">
+      <span class="k" style="max-width:58%">${c.met?"✅":"○"} ${esc(c.condition)}</span>
+      <span class="v" style="font-weight:400;text-align:right">${esc(c.current||"")}
+        ${c.gap?`<span class="lab" style="display:block;color:var(--muted);font-weight:400">${esc(c.gap)}</span>`:""}</span></div>`).join("");
+    return `<div class="lab" style="margin:10px 0 4px">${title}</div>${rows}`;
+  };
+  return `<div class="card"><h2>触发阈值 <span class="lab" style="color:var(--muted);font-weight:400">盯这些才改变决策</span></h2>
+    ${block(tc.offense, "🟢 转进攻条件")}${block(tc.defense, "🔴 转防御条件")}</div>`;
 }
 function cycleCard(d){
   const c = d.btc_cycle||{}, fg = d.macro?.fear_greed;
   let rows = "";
   if(c.ma200w) rows += `<div class="kv"><span class="k">BTC 200周均线</span><span class="v">$${fp(c.ma200w)}（价格/均线 ${c.price_over_ma200w}）</span></div>`;
   if(c.power_law) rows += `<div class="kv"><span class="k">幂律走廊位置</span><span class="v">${c.power_law.position_pct}%（下轨 $${fp(c.power_law.support)}）</span></div>`;
-  if(c.mvrv) rows += `<div class="kv"><span class="k">MVRV</span><span class="v">${c.mvrv.value}<span class="lab" style="font-weight:400;color:var(--muted)"> ${c.mvrv.date}</span></span></div>`;
+  if(c.mvrv){
+    const mv = c.mvrv;
+    const extra = [];
+    if(mv.percentile!=null) extra.push(`分位 ${mv.percentile}%`);
+    if(mv.zscore!=null) extra.push(`Z=${mv.zscore}`);
+    if(mv.degraded) extra.push("降级：仅读数");
+    rows += `<div class="kv"><span class="k">MVRV</span><span class="v">${mv.value}
+      <span class="lab" style="font-weight:400;color:var(--muted)">${extra.length?" "+esc(extra.join(" · ")):""} ${mv.date||""}</span></span></div>`;
+  }
+  if(c.cbbi){
+    const cb = c.cbbi;
+    const hot = cb.value>=90, cold = cb.value<15;
+    const chg = cb.change_30d!=null ? `<span class="lab" style="font-weight:400;color:var(--muted)"> 30日 ${cb.change_30d>=0?"+":""}${cb.change_30d}</span>` : "";
+    rows += `<div class="kv"><span class="k">CBBI</span><span class="v ${hot?"down":(cold?"up":"")}">${cb.value}${chg}
+      <span class="lab" style="font-weight:400;color:var(--muted)"> ${esc(cb.zone||"")}</span></span></div>`;
+  }
   if(fg) rows += `<div class="kv"><span class="k">恐惧贪婪指数</span><span class="v">${fg.value} · ${esc(fg.label)}</span></div>`;
   if(!rows) rows = `<div class="missing">周期数据缺失</div>`;
   return `<div class="card"><h2>BTC 周期估值锚</h2>${rows}
@@ -228,7 +278,7 @@ async function main(){
   if(tl.length){ $("#tldr").hidden = false; $("#tldr").innerHTML = tl.map(x=>`<div>${x}</div>`).join(""); }
   // coins
   $("#coins").innerHTML = ["BTC","ETH","SOL"].map(c => d.coins?.[c] ? coinCard(c, d.coins[c]) : "").join("");
-  $("#aux").innerHTML = cycleCard(d) + macroCard(d);
+  $("#aux").innerHTML = cycleCard(d) + macroCard(d) + conditionsCard(d.trigger_conditions);
   // footer
   $("#foot").innerHTML = esc(d.disclaimer||"") +
     (d.missing?.length ? `<div class="missing" style="margin-top:8px">本次缺失：${esc(d.missing.join("；"))}</div>` : "");

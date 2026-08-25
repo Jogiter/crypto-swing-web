@@ -5,9 +5,10 @@ import logging
 import pathlib
 import datetime as dt
 
-from . import sources, macro
+from . import sources, macro, triggers as trig
 from .scoring import score_frame
 from .levels import support_resistance
+from .geometry import trade_geometry
 from .report import build_report
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -50,6 +51,17 @@ def analyze_coin(coin, missing):
         except Exception as e:  # noqa: BLE001
             log.warning("%s %s failed entirely: %s", coin, tf, e)
             missing.append(f"{coin} {tf} K线（{str(e)[:90]}）")
+
+    # 交易几何（纯计算：结构止损/最终止损/分批止盈/RR）
+    f4 = out["frames"].get("4h")
+    if f4:
+        out["geometry"] = trade_geometry(
+            price=f4.get("close"),
+            levels=f4.get("levels"),
+            supertrend_line=(f4.get("score", {}).get("supertrend", {}) or {}).get("line"),
+            tf="4h",
+            wider_levels=out["frames"].get("1d", {}).get("levels"),
+        )
 
     # 现货价（CoinGecko 兜底，也做交叉验证）
     try:
@@ -107,10 +119,17 @@ def run():
     if "ma200w" in w:
         data["btc_cycle"]["ma200w"] = w["ma200w"]
         data["btc_cycle"]["price_over_ma200w"] = w["price_over_ma200w"]
+    elif w:
+        # 周线数据不足 200 根（如降级到 CoinGecko 365 天）——此前会静默缺失
+        missing.append(f"BTC 200周均线（周线仅 {w.get('n_bars', 0)} 根，需 ≥205）")
     try:
         data["btc_cycle"]["mvrv"] = sources.mvrv_btc()
     except Exception as e:  # noqa: BLE001
         missing.append(f"MVRV（{str(e)[:90]}）")
+    try:
+        data["btc_cycle"]["cbbi"] = sources.cbbi()
+    except Exception as e:  # noqa: BLE001
+        missing.append(f"CBBI（{str(e)[:90]}）")
 
     # ---- 规则化性质判定 ----
     spx = data["macro"].get("indices", {}).get("SP500", {})
@@ -134,6 +153,9 @@ def run():
     if fg:
         triggers.append(f"恐惧贪婪指数 {fg['value']}（{fg['label']}）")
     data["triggers"] = triggers
+
+    # ---- 前瞻性触发阈值（转进攻/转防御的可验证条件） ----
+    data["trigger_conditions"] = trig.build_conditions(data)
 
     # ---- 与上次对照 ----
     latest_path = ROOT / "docs" / "data" / "latest.json"
