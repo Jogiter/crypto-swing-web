@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>加密波段量化面板</title>
+<style>
+:root{
+  color-scheme: light;
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --baseline:#c3c2b7; --border:rgba(11,11,11,.10);
+  --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+  --good-text:#006300;
+  --accent:#2a78d6; --accent-2:#256abf;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,.10);
+    --good-text:#0ca30c; --accent:#3987e5; --accent-2:#3987e5;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,.10);
+  --good-text:#0ca30c; --accent:#3987e5; --accent-2:#3987e5;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);
+  font:15px/1.55 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 60px}
+header.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin:8px 0 4px}
+header.top h1{font-size:22px;margin:0;font-weight:700}
+.stamp{color:var(--muted);font-size:13px}
+.pill{display:inline-block;padding:1px 10px;border:1px solid var(--border);border-radius:999px;
+  font-size:12px;color:var(--ink-2);background:var(--surface)}
+.tldr{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:12px 16px;margin:14px 0}
+.tldr div{padding:3px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:14px;margin-top:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.card h2{margin:0 0 4px;font-size:17px}
+.price{font-size:26px;font-weight:700}
+.chg{font-size:13px;margin-left:6px}
+.up{color:var(--good-text)} .down{color:var(--critical)}
+.meter{position:relative;height:10px;border-radius:5px;background:var(--grid);margin:6px 0 2px;overflow:hidden}
+.meter>i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
+.meter-marks{position:relative;height:0}
+.meter-marks b{position:absolute;top:-12px;width:1px;height:14px;background:var(--baseline)}
+.tfrow{display:flex;align-items:center;gap:8px;margin:8px 0 2px;font-size:13px;color:var(--ink-2)}
+.tfrow .tf{width:36px;font-weight:600;color:var(--ink)}
+.tfrow .score{width:52px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink)}
+.tfrow .sig{font-size:12px}
+.lamp{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:1px 8px;border-radius:999px;
+  border:1px solid var(--border)}
+.lamp i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.levels{font-size:13px;color:var(--ink-2);margin-top:10px;border-top:1px solid var(--grid);padding-top:8px}
+.levels b{color:var(--ink);font-variant-numeric:tabular-nums}
+.levels .lab{color:var(--muted);font-size:12px}
+details.comp{margin-top:8px;font-size:13px}
+details.comp summary{cursor:pointer;color:var(--accent);font-size:13px}
+table.comp{width:100%;border-collapse:collapse;margin-top:6px;font-size:12.5px}
+table.comp td,table.comp th{padding:3px 6px;border-bottom:1px solid var(--grid);text-align:left}
+table.comp td:nth-child(2){text-align:right;font-variant-numeric:tabular-nums}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:14px}
+.kv .k{color:var(--ink-2)} .kv .v{font-variant-numeric:tabular-nums;font-weight:600}
+.note{color:var(--muted);font-size:12.5px;margin-top:8px}
+h2.sec{font-size:17px;margin:26px 0 2px}
+.reports{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px 16px;margin-top:10px}
+.reports a{color:var(--accent);text-decoration:none;display:inline-block;padding:4px 10px 4px 0}
+.reports a:hover{text-decoration:underline}
+#reportview{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:20px 24px;margin-top:14px;display:none;overflow-x:auto}
+#reportview table{border-collapse:collapse;font-size:13.5px}
+#reportview th,#reportview td{border:1px solid var(--grid);padding:4px 9px}
+#reportview h1{font-size:20px} #reportview h2{font-size:17px} #reportview h3{font-size:15px}
+#reportview blockquote{border-left:3px solid var(--baseline);margin:8px 0;padding:2px 12px;color:var(--ink-2)}
+footer{margin-top:34px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--grid);padding-top:14px}
+.err{color:var(--critical);padding:20px 0}
+.missing{color:var(--serious);font-size:12.5px}
+@media (max-width:640px){ .wrap{padding:12px 10px 40px} .price{font-size:22px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>加密波段量化面板</h1>
+    <span class="pill">BTC · ETH · SOL</span>
+    <span class="stamp" id="stamp">加载中…</span>
+  </header>
+  <div class="stamp">纯量化脚本每日自动生成 · 加权评分 SRSI25/MACD25/MFI20/Vol15/ST15 · ≥70 做多 / ≤30 离场</div>
+
+  <div class="tldr" id="tldr" hidden></div>
+  <div class="grid" id="coins"></div>
+  <div class="grid" id="aux"></div>
+
+  <h2 class="sec">历史报告</h2>
+  <div class="reports" id="history">加载中…</div>
+  <div id="reportview"></div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script>
+const TF = {"4h":"4H","1d":"日线","1w":"周线","1M":"月线"};
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fp = p => p==null ? "—" : (p>=1000 ? p.toLocaleString("en-US",{maximumFractionDigits:0}) : p.toLocaleString("en-US",{maximumFractionDigits:2}));
+
+function lampColor(sig){
+  return sig==="做多信号" ? "var(--good)" : sig==="离场信号" ? "var(--critical)" : "var(--warning)";
+}
+function lamp(sig){
+  return `<span class="lamp"><i style="background:${lampColor(sig)}"></i>${esc(sig||"—")}</span>`;
+}
+function meter(score, sig){
+  const w = Math.max(0, Math.min(100, score||0));
+  return `<div class="meter"><i style="width:${w}%;background:${lampColor(sig)}"></i></div>
+  <div class="meter-marks"><b style="left:30%"></b><b style="left:70%"></b></div>`;
+}
+function chg(v){
+  if(v==null) return "";
+  const cls = v>=0 ? "up" : "down";
+  return `<span class="chg ${cls}">${v>=0?"+":""}${v.toFixed(2)}%</span>`;
+}
+function levelsHtml(lv){
+  if(!lv) return "";
+  const row = (name, arr) => arr && arr.length
+    ? `<div>${name}：` + arr.map(x=>`<b>${fp(x.price)}</b> <span class="lab">${esc(x.basis)}</span>`).join("　") + `</div>` : "";
+  return row("阻力", lv.resistances) + row("支撑", lv.supports);
+}
+function compTable(sc){
+  if(!sc) return "";
+  const rows = [
+    ["SRSI", sc.srsi, `K=${sc.srsi.k??"—"} D=${sc.srsi.d??"—"}`],
+    ["MACD", sc.macd, `柱 ${sc.macd.hist??"—"}`],
+    ["MFI", sc.mfi, sc.mfi.value!=null?`MFI ${sc.mfi.value}`:(sc.mfi.note||"—")],
+    ["Volume", sc.volume, sc.volume.ratio_vs_ma20!=null?`量/20均量 ${sc.volume.ratio_vs_ma20}`:"—"],
+    ["SuperTrend", sc.supertrend, `${sc.supertrend.direction} @ ${fp(sc.supertrend.line)}`],
+  ];
+  return `<details class="comp"><summary>4H 评分明细（ADX ${sc.adx?.value??"—"} · ${esc(sc.adx?.trend_strength||"")}）</summary>
+  <table class="comp">` + rows.map(([n,o,note])=>
+    `<tr><td>${n}</td><td>${o.score}/${o.max}</td><td>${esc(note)}</td></tr>`).join("") +
+  `</table></details>`;
+}
+function coinCard(name, cd){
+  const f4 = cd.frames?.["4h"], sc4 = f4?.score;
+  let tfrows = "";
+  for(const tf of ["4h","1d","1w","1M"]){
+    const fr = cd.frames?.[tf];
+    if(!fr){ tfrows += `<div class="tfrow"><span class="tf">${TF[tf]}</span><span class="missing">数据缺失</span></div>`; continue; }
+    const s = fr.score;
+    tfrows += `<div class="tfrow"><span class="tf">${TF[tf]}</span>
+      <span style="flex:1">${meter(s.total, s.signal)}</span>
+      <span class="score">${s.total}</span>${lamp(s.signal)}</div>`;
+  }
+  return `<div class="card">
+    <h2>${name}</h2>
+    <div><span class="price">$${fp(cd.price)}</span>${chg(cd.spot?.change_24h_pct)}
+      ${cd.change_5d_pct!=null?`<span class="chg ${cd.change_5d_pct>=0?"up":"down"}">5日 ${cd.change_5d_pct>=0?"+":""}${cd.change_5d_pct}%</span>`:""}</div>
+    ${tfrows}
+    ${compTable(sc4)}
+    <div class="levels">${levelsHtml(f4?.levels)}</div>
+  </div>`;
+}
+function cycleCard(d){
+  const c = d.btc_cycle||{}, fg = d.macro?.fear_greed;
+  let rows = "";
+  if(c.ma200w) rows += `<div class="kv"><span class="k">BTC 200周均线</span><span class="v">$${fp(c.ma200w)}（价格/均线 ${c.price_over_ma200w}）</span></div>`;
+  if(c.power_law) rows += `<div class="kv"><span class="k">幂律走廊位置</span><span class="v">${c.power_law.position_pct}%（下轨 $${fp(c.power_law.support)}）</span></div>`;
+  if(c.mvrv) rows += `<div class="kv"><span class="k">MVRV</span><span class="v">${c.mvrv.value}<span class="lab" style="font-weight:400;color:var(--muted)"> ${c.mvrv.date}</span></span></div>`;
+  if(fg) rows += `<div class="kv"><span class="k">恐惧贪婪指数</span><span class="v">${fg.value} · ${esc(fg.label)}</span></div>`;
+  if(!rows) rows = `<div class="missing">周期数据缺失</div>`;
+  return `<div class="card"><h2>BTC 周期估值锚</h2>${rows}
+    <div class="note">幂律为公开近似拟合，仅作周期定位参考</div></div>`;
+}
+function macroCard(d){
+  const idx = d.macro?.indices, rg = d.macro?.regime, etf = d.macro?.etf_flows;
+  let rows = "";
+  if(idx){
+    for(const [key,label] of [["SP500","标普500"],["NASDAQ","纳指"],["DOW","道指"]]){
+      const v = idx[key]; if(!v) continue;
+      rows += `<div class="kv"><span class="k">${label}</span><span class="v">${v.last.toLocaleString()} <span class="${v.change_1d_pct>=0?"up":"down"}">${v.change_1d_pct>=0?"+":""}${v.change_1d_pct}%</span>
+        <span class="lab" style="color:var(--muted);font-weight:400">5日 ${v.change_5d_pct>=0?"+":""}${v.change_5d_pct}%</span></span></div>`;
+    }
+  } else rows += `<div class="missing">美股数据缺失</div>`;
+  if(etf?.BTC?.length){
+    const last = etf.BTC[etf.BTC.length-1];
+    rows += `<div class="kv"><span class="k">BTC ETF 最新净流向</span><span class="v ${last.total_musd>=0?"up":"down"}">${last.total_musd>=0?"+":""}${last.total_musd.toLocaleString()}M</span></div>`;
+  } else rows += `<div class="kv"><span class="k">BTC ETF 流向</span><span class="missing">抓取失败，见 farside.co.uk</span></div>`;
+  let regime = "";
+  if(rg) regime = `<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--grid)">
+    <div><b>行情性质（规则判定）</b>：${esc(rg.name||"")}</div>
+    <div class="note">${esc(rg.meaning||"")}<br>机械应对：${esc(rg.action||"")}${rg.etf_note?`<br>${esc(rg.etf_note)}`:""}</div></div>`;
+  return `<div class="card"><h2>美股与风险偏好</h2>${rows}${regime}</div>`;
+}
+
+async function showReport(date){
+  const view = $("#reportview");
+  view.style.display = "block";
+  view.innerHTML = "加载中…";
+  try{
+    const md = await (await fetch(`reports/${date}.md`)).text();
+    view.innerHTML = (window.marked ? marked.parse(md) : `<pre style="white-space:pre-wrap">${esc(md)}</pre>`);
+    view.scrollIntoView({behavior:"smooth"});
+  }catch(e){ view.innerHTML = `<div class="err">报告加载失败：${esc(e)}</div>`; }
+}
+
+async function main(){
+  let d;
+  try{
+    d = await (await fetch("data/latest.json", {cache:"no-store"})).json();
+  }catch(e){
+    $("#stamp").textContent = "";
+    $("#coins").innerHTML = `<div class="err">尚无数据——等待第一次定时任务运行（GitHub Actions）。</div>`;
+    return;
+  }
+  $("#stamp").textContent = d.generated_at_beijing || d.date;
+  // TL;DR
+  const btc4 = d.coins?.BTC?.frames?.["4h"]?.score;
+  const tl = [];
+  if(btc4) tl.push(`BTC 4H 加权评分 <b>${btc4.total}/100</b> ${lamp(btc4.signal)}`);
+  if(d.macro?.regime) tl.push(`行情性质：<b>${esc(d.macro.regime.name)}</b> —— ${esc(d.macro.regime.action)}`);
+  if(d.macro?.regime?.etf_note) tl.push(esc(d.macro.regime.etf_note));
+  if(tl.length){ $("#tldr").hidden = false; $("#tldr").innerHTML = tl.map(x=>`<div>${x}</div>`).join(""); }
+  // coins
+  $("#coins").innerHTML = ["BTC","ETH","SOL"].map(c => d.coins?.[c] ? coinCard(c, d.coins[c]) : "").join("");
+  $("#aux").innerHTML = cycleCard(d) + macroCard(d);
+  // footer
+  $("#foot").innerHTML = esc(d.disclaimer||"") +
+    (d.missing?.length ? `<div class="missing" style="margin-top:8px">本次缺失：${esc(d.missing.join("；"))}</div>` : "");
+  // history
+  try{
+    const idx = await (await fetch("data/index.json", {cache:"no-store"})).json();
+    const dates = (idx.dates||[]).slice().reverse();
+    $("#history").innerHTML = dates.length
+      ? dates.map(x=>`<a href="#" onclick="showReport('${x}');return false">${x}</a>`).join("")
+      : "暂无历史报告";
+  }catch(e){ $("#history").textContent = "历史索引加载失败"; }
+}
+main();
+</script>
+</body>
+</html>
