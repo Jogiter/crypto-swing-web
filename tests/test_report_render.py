@@ -129,7 +129,7 @@ def test_report_explains_missing_zscore():
     d["btc_cycle"]["mvrv"] = {
         "value": 1.491, "date": "2026-08-24", "zone": "中性区",
         "percentile": 62.0, "history_days": 5800,
-        "zscore_note": "社区版无市值/实现市值序列权限，Z-Score 不可用",
+        "zscore_note": "社区版无市值/实现市值序列权限",
     }
     md = build_report(d)
     assert "历史分位 **62.0%**" in md

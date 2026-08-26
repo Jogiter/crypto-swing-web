@@ -269,7 +269,7 @@ def mvrv_btc():
         out.update(_mvrv_zscore())
     except Exception as e:  # noqa: BLE001
         log.warning("mvrv z-score unavailable (community tier lacks cap metrics): %s", e)
-        out["zscore_note"] = "社区版无市值/实现市值序列权限，Z-Score 不可用"
+        out["zscore_note"] = "社区版无市值/实现市值序列权限"
     return out
 
 
