@@ -7,9 +7,9 @@ import datetime as dt
 
 from . import sources, macro, triggers as trig
 from .scoring import score_frame
-from .levels import support_resistance
+from .levels import key_pivots, support_resistance
 from .geometry import trade_geometry
-from .indicators import atr as _atr
+from .indicators import atr as _atr, ema as _ema
 from .playbook import build_playbook
 from .report import build_report
 
@@ -49,15 +49,26 @@ def analyze_coin(coin, missing):
                 daily_close = df["close"]
                 frame["change_5d_pct"] = _pct(df["close"], 5)
                 frame["change_30d_pct"] = _pct(df["close"], 30)
-            if tf == "1w" and coin == "BTC" and len(df) >= 205:
-                ma200w = float(df["close"].rolling(200).mean().iloc[-1])
-                frame["ma200w"] = round(ma200w, 0)
-                frame["price_over_ma200w"] = round(float(df["close"].iloc[-1]) / ma200w, 3)
+            if tf == "1w":
+                # 三个币种都算——ETH/SOL 的周线同样够长，200 周均线常是它们的
+                # 关键翻多线或生死线，此前被硬编码限制成 BTC 专属而白白丢弃
+                if len(df) >= 205:
+                    ma200w = float(df["close"].rolling(200).mean().iloc[-1])
+                    frame["ma200w"] = round(ma200w, 0)
+                    frame["price_over_ma200w"] = round(float(df["close"].iloc[-1]) / ma200w, 3)
+                if len(df) >= 25:
+                    frame["ema20w"] = round(float(_ema(df["close"], 20).iloc[-1]), 2)
             out["frames"][tf] = frame
             out["sources"][tf] = src
         except Exception as e:  # noqa: BLE001
             log.warning("%s %s failed entirely: %s", coin, tf, e)
             missing.append(f"{coin} {tf} K线（{str(e)[:90]}）")
+
+    # 关键翻多线与结构生死线（周线级）
+    w = out["frames"].get("1w")
+    ref = (out["frames"].get("4h") or {}).get("close")
+    if w and ref:
+        out["key_pivots"] = key_pivots(w, ref)
 
     # 交易几何（纯计算：结构止损/最终止损/分批止盈/RR）
     f4 = out["frames"].get("4h")

@@ -76,3 +76,38 @@ def support_resistance(df, tf_label, lookback=120, max_each=3):
                 for p, b in items]
 
     return {"supports": _fmt(sup, True), "resistances": _fmt(res, False)}
+
+
+def key_pivots(weekly_frame, price):
+    """关键翻多线与结构生死线——周线级的两个决定性价位。
+
+    翻多线：价格**上方**最近的周线级关键位，站上即中期结构转多。
+    生死线：价格**下方**最低的周线级防线，跌破即中期论点证伪。
+
+    候选只取周线级（周线 SuperTrend / 200 周均线 / 20 周 EMA）——
+    日内点位不具备"结构性"含义，混进来会稀释这两行的分量。
+    """
+    cands = []
+    st = (weekly_frame.get("score") or {}).get("supertrend") or {}
+    if st.get("line"):
+        cands.append((float(st["line"]), "周线 SuperTrend"))
+    if weekly_frame.get("ma200w"):
+        cands.append((float(weekly_frame["ma200w"]), "200 周均线"))
+    if weekly_frame.get("ema20w"):
+        cands.append((float(weekly_frame["ema20w"]), "20 周 EMA"))
+
+    def _fmt(p, basis):
+        return {"price": round(p, 2 if p < 1000 else 0),
+                "basis": basis,
+                "distance_pct": round((p / price - 1) * 100, 2)}
+
+    out = {}
+    above = [c for c in cands if c[0] > price]
+    below = [c for c in cands if c[0] < price]
+    if above:
+        p, b = min(above, key=lambda x: x[0])          # 上方最近 = 最先要突破的
+        out["flip_long"] = _fmt(p, b)
+    if below:
+        p, b = min(below, key=lambda x: x[0])          # 下方最低 = 最后防线
+        out["structural_line"] = _fmt(p, b)
+    return out

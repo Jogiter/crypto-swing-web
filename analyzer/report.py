@@ -129,21 +129,25 @@ def _key_levels_table(d):
         cd = d.get("coins", {}).get(coin)
         if not cd:
             continue
-        price = cd.get("price")
-        cells = [f"**{coin}**", f"${_fmt_price(price)}"]
-        for tf in ["4h", "1d", "1w"]:
+        cells = [f"**{coin}**", f"${_fmt_price(cd.get('price'))}"]
+        for tf in ["4h", "1d"]:
             lv = (cd.get("frames", {}).get(tf) or {}).get("levels") or {}
             sup = sorted((lv.get("supports") or []), key=lambda x: -x["price"])
             res = sorted((lv.get("resistances") or []), key=lambda x: x["price"])
-            s0 = f"${_fmt_price(sup[0]['price'])}" if sup else "—"
-            r0 = f"${_fmt_price(res[0]['price'])}" if res else "—"
-            cells += [s0, r0]
+            cells.append(f"${_fmt_price(sup[0]['price'])}" if sup else "—")
+            cells.append(f"${_fmt_price(res[0]['price'])}" if res else "—")
+        kp = cd.get("key_pivots") or {}
+        for key in ("flip_long", "structural_line"):
+            v = kp.get(key)
+            cells.append(f"**${_fmt_price(v['price'])}**<br><sub>{v['basis']}</sub>" if v else "—")
         rows.append("| " + " | ".join(cells) + " |")
     if not rows:
         return ""
     head = ("\n---\n\n## 关键位速查\n\n"
-            "> 每格为该周期最贴近的支撑/阻力（取自该周期 K 线）；完整点位见各币种分节。\n\n"
-            "| 币种 | 现价 | 4H 支撑 | 4H 阻力 | 日线支撑 | 日线阻力 | 周线支撑 | 周线阻力 |\n"
+            "> 前四列为该周期最贴近的支撑/阻力（取自该周期 K 线）。\n"
+            "> **关键翻多线**：上方最近的周线级关键位，站上即中期结构转多；\n"
+            "> **结构生死线**：下方最低的周线级防线，跌破即中期论点证伪。\n\n"
+            "| 币种 | 现价 | 4H 支撑 | 4H 阻力 | 日线支撑 | 日线阻力 | 🎯 关键翻多线 | ⛔ 结构生死线 |\n"
             "|---|---:|---:|---:|---:|---:|---:|---:|\n")
     return head + "\n".join(rows) + "\n"
 

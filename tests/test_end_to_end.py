@@ -161,3 +161,26 @@ def test_report_has_key_levels_and_playbook(patched):
     assert "做多方案（机械版 · 规则派生，非主观建议）" in md
     assert "**信心等级**" in md and "**仓位权重**" in md
     assert "加仓硬条件" in md
+
+
+def test_ma200w_computed_for_every_coin_not_just_btc(patched):
+    """周线够长时三个币都该有 200 周均线——曾被硬编码限制成 BTC 专属。"""
+    d = main_mod.run()
+    for coin in ["BTC", "ETH", "SOL"]:
+        w = d["coins"][coin]["frames"]["1w"]
+        assert "ema20w" in w, f"{coin} 缺 20 周 EMA"
+
+
+def test_key_pivots_present_for_every_coin(patched):
+    d = main_mod.run()
+    for coin in ["BTC", "ETH", "SOL"]:
+        kp = d["coins"][coin].get("key_pivots")
+        assert kp, f"{coin} 缺 key_pivots"
+        assert kp.get("flip_long") or kp.get("structural_line")
+
+
+def test_key_levels_table_has_pivot_columns(patched):
+    d = main_mod.run()
+    md = (patched / "reports" / f"{d['date']}.md").read_text(encoding="utf-8")
+    assert "🎯 关键翻多线" in md and "⛔ 结构生死线" in md
+    assert "周线支撑" not in md      # 已被两个关键位取代

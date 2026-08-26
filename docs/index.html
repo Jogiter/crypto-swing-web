@@ -197,7 +197,7 @@ function coinCard(name, cd){
   </div>`;
 }
 function keyLevelsCard(d){
-  const TFS = [["4h","4H"],["1d","日线"],["1w","周线"]];
+  const TFS = [["4h","4H"],["1d","日线"]];
   const rows = ["BTC","ETH","SOL"].map(coin=>{
     const cd = d.coins?.[coin]; if(!cd) return "";
     const price = cd.price;
@@ -220,12 +220,21 @@ function keyLevelsCard(d){
       const lv = cd.frames?.[tf]?.levels;
       tds += cell(tf,lv,"s") + cell(tf,lv,"r");
     }
+    const kp = cd.key_pivots||{};
+    for(const [key,cls] of [["flip_long","up"],["structural_line","down"]]){
+      const v = kp[key];
+      tds += v
+        ? `<td><span class="${cls}"><b>$${fp(v.price)}</b></span>
+             <span class="dist">${esc(v.basis||"")}${v.distance_pct!=null?` · ${v.distance_pct>=0?"+":""}${v.distance_pct}%`:""}</span></td>`
+        : `<td>—</td>`;
+    }
     return `<tr>${tds}</tr>`;
   }).filter(Boolean).join("");
   if(!rows) return "";
-  const head = TFS.map(([,label])=>`<th>${label}支撑</th><th>${label}阻力</th>`).join("");
+  const head = TFS.map(([,label])=>`<th>${label}支撑</th><th>${label}阻力</th>`).join("")
+    + `<th>🎯 关键翻多线</th><th>⛔ 结构生死线</th>`;
   return `<div class="keylv"><h2>关键位速查</h2>
-    <div class="note" style="margin-top:2px">每格为该周期最贴近的支撑/阻力，括注依据与距<b>该周期收盘价</b>的百分比（与点位同源，故可能与现价列略有出入）。完整点位见下方各币种卡片。</div>
+    <div class="note" style="margin-top:2px">前四列为该周期最贴近的支撑/阻力，括注依据与距<b>该周期收盘价</b>的百分比（与点位同源，故可能与现价列略有出入）。<b>关键翻多线</b>＝上方最近的周线级关键位，站上即中期结构转多；<b>结构生死线</b>＝下方最低的周线级防线，跌破即中期论点证伪。</div>
     <div class="scroller"><table class="klv">
       <thead><tr><th>币种</th><th>现价</th>${head}</tr></thead>
       <tbody>${rows}</tbody>
