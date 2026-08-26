@@ -123,3 +123,41 @@ def test_ma200w_shortfall_is_recorded_not_silent(patched, monkeypatch):
                         lambda coin, tf: (_synth_df(n=60), f"Mock-{tf}"))
     d = main_mod.run()
     assert any("200周均线" in m for m in d["missing"]), d["missing"]
+
+
+def test_playbook_generated_for_every_coin(patched):
+    d = main_mod.run()
+    for coin in ["BTC", "ETH", "SOL"]:
+        pb = d["coins"][coin]["playbook"]
+        assert pb["layer"] == "mechanical"
+        assert pb["confidence"]["level"] in {"高", "中高", "中", "低"}
+        assert pb["position"]["pct"] > 0
+        assert pb["entry_zones"], f"{coin} 缺入场区间"
+    # BTC 带周线结构锚
+    assert d["coins"]["BTC"]["playbook"]["structural_anchor"]["name"] == "周线 200 周均线"
+
+
+def test_playbook_uses_regime_and_atr(patched):
+    d = main_mod.run()
+    pb = d["coins"]["BTC"]["playbook"]
+    assert pb["atr_pct"] is not None
+    assert "行情性质" in pb["confidence"]["basis"] or d["macro"]["regime"]["key"] == "neutral"
+    assert "ATR" in pb["position"]["basis"]
+
+
+def test_etf_condition_reaches_playbook_as_market_level(patched):
+    """ETF 流向是全市场先行灯，应作为市场级前提出现在各币加仓条件里。"""
+    d = main_mod.run()
+    for coin in ["BTC", "ETH", "SOL"]:
+        conds = [c["condition"] for c in d["coins"][coin]["playbook"]["add_conditions"]["items"]]
+        assert any(c.startswith("[市场级]") and "ETF" in c for c in conds), coin
+
+
+def test_report_has_key_levels_and_playbook(patched):
+    d = main_mod.run()
+    md = (patched / "reports" / f"{d['date']}.md").read_text(encoding="utf-8")
+    assert "## 关键位速查" in md
+    assert "| 币种 | 现价 | 4H 支撑 |" in md
+    assert "做多方案（机械版 · 规则派生，非主观建议）" in md
+    assert "**信心等级**" in md and "**仓位权重**" in md
+    assert "加仓硬条件" in md

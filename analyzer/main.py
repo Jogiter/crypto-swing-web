@@ -9,6 +9,8 @@ from . import sources, macro, triggers as trig
 from .scoring import score_frame
 from .levels import support_resistance
 from .geometry import trade_geometry
+from .indicators import atr as _atr
+from .playbook import build_playbook
 from .report import build_report
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -38,6 +40,11 @@ def analyze_coin(coin, missing):
                 "levels": support_resistance(df, tf, lookback=TF_LOOKBACK[tf]),
                 "n_bars": int(len(df)),
             }
+            if tf == "4h":
+                a = float(_atr(df).iloc[-1])
+                c = float(df["close"].iloc[-1])
+                frame["atr"] = round(a, 2)
+                frame["atr_pct"] = round(a / c * 100, 2) if c else None
             if tf == "1d":
                 daily_close = df["close"]
                 frame["change_5d_pct"] = _pct(df["close"], 5)
@@ -156,6 +163,30 @@ def run():
 
     # ---- 前瞻性触发阈值（转进攻/转防御的可验证条件） ----
     data["trigger_conditions"] = trig.build_conditions(data)
+
+    # ---- 机械版做多方案（确定性规则派生，非主观建议） ----
+    # 市场级前提：ETF 流向是全市场先行灯，对三个币种同样适用
+    macro_conditions = [c for c in data["trigger_conditions"]["offense"]
+                        if "ETF" in c["condition"]]
+    for coin, cd in data["coins"].items():
+        f4 = cd.get("frames", {}).get("4h")
+        if not f4:
+            continue
+        anchor = None
+        if coin == "BTC" and data["btc_cycle"].get("ma200w"):
+            anchor = {"name": "周线 200 周均线",
+                      "price": data["btc_cycle"]["ma200w"],
+                      "ratio": data["btc_cycle"].get("price_over_ma200w")}
+        cd["playbook"] = build_playbook(
+            frame4h=f4,
+            geometry=cd.get("geometry"),
+            regime=data["macro"].get("regime"),
+            macro_conditions=macro_conditions,
+            atr_pct=f4.get("atr_pct"),
+            atr_abs=f4.get("atr"),
+            weekly_anchor=anchor,
+        )
+
 
     # ---- 与上次对照 ----
     latest_path = ROOT / "docs" / "data" / "latest.json"

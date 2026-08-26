@@ -92,6 +92,62 @@ def _conditions_section(tc):
     return "\n".join(out) + "\n"
 
 
+def _playbook_block(pb):
+    """渲染机械版做多方案（确定性规则派生）。"""
+    if not pb or not pb.get("confidence"):
+        return ""
+    out = ["\n**做多方案（机械版 · 规则派生，非主观建议）**\n"]
+    c = pb["confidence"]
+    out.append(f"- **信心等级**：{c['level']}（综合分 {c['score']}）— {c['basis']}")
+    pos = pb.get("position") or {}
+    if pos:
+        out.append(f"- **仓位权重**：**{pos['pct']}%** — {pos['basis']}")
+    for z in pb.get("entry_zones", []):
+        out.append(f"- {z['name']}：**${_fmt_price(z['low'])} – ${_fmt_price(z['high'])}**（{z.get('note', '')}）")
+    inv = pb.get("invalidation")
+    if inv:
+        out.append(f"- **方案失效价**：**${_fmt_price(inv['price'])}**（{inv.get('basis', '')}）")
+    anchor = pb.get("structural_anchor")
+    if anchor:
+        out.append(f"- **结构锚**：{anchor['name']} ${_fmt_price(anchor['price'])}"
+                   f"（价格/锚 = {anchor.get('ratio', '—')}）")
+    ac = pb.get("add_conditions")
+    if ac and ac.get("items"):
+        out.append(f"- **加仓硬条件**（{ac['require']}）：")
+        for it in ac["items"]:
+            gap = f" — {it['gap']}" if it.get("gap") else ""
+            out.append(f"  - {it['condition']}{gap}")
+    for n in pb.get("notes", []):
+        out.append(f"- ⚠️ {n}")
+    return "\n".join(out) + "\n"
+
+
+def _key_levels_table(d):
+    """跨币种关键位速查：一张表看完三个币的多周期关键位。"""
+    rows = []
+    for coin in ["BTC", "ETH", "SOL"]:
+        cd = d.get("coins", {}).get(coin)
+        if not cd:
+            continue
+        price = cd.get("price")
+        cells = [f"**{coin}**", f"${_fmt_price(price)}"]
+        for tf in ["4h", "1d", "1w"]:
+            lv = (cd.get("frames", {}).get(tf) or {}).get("levels") or {}
+            sup = sorted((lv.get("supports") or []), key=lambda x: -x["price"])
+            res = sorted((lv.get("resistances") or []), key=lambda x: x["price"])
+            s0 = f"${_fmt_price(sup[0]['price'])}" if sup else "—"
+            r0 = f"${_fmt_price(res[0]['price'])}" if res else "—"
+            cells += [s0, r0]
+        rows.append("| " + " | ".join(cells) + " |")
+    if not rows:
+        return ""
+    head = ("\n---\n\n## 关键位速查\n\n"
+            "> 每格为该周期最贴近的支撑/阻力（取自该周期 K 线）；完整点位见各币种分节。\n\n"
+            "| 币种 | 现价 | 4H 支撑 | 4H 阻力 | 日线支撑 | 日线阻力 | 周线支撑 | 周线阻力 |\n"
+            "|---|---:|---:|---:|---:|---:|---:|---:|\n")
+    return head + "\n".join(rows) + "\n"
+
+
 def build_report(d):
     md = []
     md.append(f"# 加密波段量化快照 · {d['date']}\n")
@@ -136,6 +192,11 @@ def build_report(d):
             md.append(f"| {it['coin']} | {_fmt_price(it['price_prev'])} | {_fmt_price(it['price_now'])} "
                       f"| {it['price_chg_pct']:+.2f}% | {it.get('score_prev', '—')} | {it.get('score_now', '—')} | {sig} |")
 
+    # 关键位速查（跨币种）
+    kl = _key_levels_table(d)
+    if kl:
+        md.append(kl)
+
     # 各币种
     for coin in ["BTC", "ETH", "SOL"]:
         cd = d["coins"].get(coin)
@@ -161,6 +222,9 @@ def build_report(d):
                 geo = _geometry_block(cd.get("geometry"))
                 if geo:
                     md.append(geo)
+                pbk = _playbook_block(cd.get("playbook"))
+                if pbk:
+                    md.append(pbk)
             else:
                 st = sc.get("supertrend", {})
                 md.append(f"  - 指标概要：MACD柱 {sc.get('macd', {}).get('hist', '—')}，"
