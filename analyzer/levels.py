@@ -78,11 +78,16 @@ def support_resistance(df, tf_label, lookback=120, max_each=3):
     return {"supports": _fmt(sup, True), "resistances": _fmt(res, False)}
 
 
+# 生死线的结构重要度排序：越靠前越有"跌破即证伪"的分量
+STRUCTURAL_PRIORITY = ["200 周均线", "20 周 EMA", "周线 SuperTrend"]
+
+
 def key_pivots(weekly_frame, price):
     """关键翻多线与结构生死线——周线级的两个决定性价位。
 
     翻多线：价格**上方**最近的周线级关键位，站上即中期结构转多。
-    生死线：价格**下方**最低的周线级防线，跌破即中期论点证伪。
+    生死线：价格**下方**结构分量最重的周线级防线，跌破即中期论点证伪
+            （按 STRUCTURAL_PRIORITY 取，不是取最低——见下方说明）。
 
     候选只取周线级（周线 SuperTrend / 200 周均线 / 20 周 EMA）——
     日内点位不具备"结构性"含义，混进来会稀释这两行的分量。
@@ -104,10 +109,17 @@ def key_pivots(weekly_frame, price):
     out = {}
     above = [c for c in cands if c[0] > price]
     below = [c for c in cands if c[0] < price]
+
+    # 翻多线取「上方最近」——挡在前面的第一道墙才是要突破的那道。
     if above:
-        p, b = min(above, key=lambda x: x[0])          # 上方最近 = 最先要突破的
+        p, b = min(above, key=lambda x: x[0])
         out["flip_long"] = _fmt(p, b)
-    if below:
-        p, b = min(below, key=lambda x: x[0])          # 下方最低 = 最后防线
-        out["structural_line"] = _fmt(p, b)
+
+    # 生死线按「结构重要度」而非「最低」。二者不对称是有意的：
+    # 取最低会选到离现价 -33% 的位，那种距离下论点早已证伪，不构成防线。
+    for basis in STRUCTURAL_PRIORITY:
+        hit = [c for c in below if c[1] == basis]
+        if hit:
+            out["structural_line"] = _fmt(hit[0][0], basis)
+            break
     return out

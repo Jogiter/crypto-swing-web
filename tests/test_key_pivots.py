@@ -27,13 +27,12 @@ def test_btc_shape_supertrend_above_ma200w_below():
 
 
 def test_eth_shape_supertrend_below_ma200w_above():
-    """线上 ETH 真实形态：周线 ST 已翻多在下方，200 周均线仍在上方——
-    此时翻多线应是 200 周均线，与 skill 报告的判断一致。"""
-    kp = key_pivots(_weekly(st_line=1643.93, ma200w=2493.0, ema20w=2039.0), 2464.77)
+    """线上 ETH 真实形态：周线 ST 已翻多在下方，200 周均线仍在上方。"""
+    kp = key_pivots(_weekly(st_line=1643.93, ma200w=2500.0, ema20w=2071.61), 2467.60)
     assert kp["flip_long"]["basis"] == "200 周均线"
-    assert kp["flip_long"]["price"] == 2493
-    # 下方最低者为最后防线
-    assert kp["structural_line"]["price"] == 1644
+    # 生死线取 20 周 EMA 而非更低的周线 ST——后者距现价 -33%，不构成防线
+    assert kp["structural_line"]["basis"] == "20 周 EMA"
+    assert kp["structural_line"]["price"] == 2072
 
 
 def test_flip_long_picks_nearest_above_not_highest():
@@ -41,9 +40,21 @@ def test_flip_long_picks_nearest_above_not_highest():
     assert kp["flip_long"]["price"] == 105000
 
 
-def test_structural_line_picks_lowest_below_not_nearest():
-    kp = key_pivots(_weekly(st_line=95000.0, ma200w=60000.0, ema20w=80000.0), 100000.0)
-    assert kp["structural_line"]["price"] == 60000
+def test_structural_line_prefers_ma200w_over_lower_candidates():
+    """200 周均线在下方时优先，即使别的候选更低。"""
+    kp = key_pivots(_weekly(st_line=50000.0, ma200w=60000.0, ema20w=80000.0), 100000.0)
+    assert kp["structural_line"]["basis"] == "200 周均线"
+
+
+def test_structural_line_falls_to_ema20w_when_ma200w_above():
+    """真实回归：ma200w 在上方时降级到 20 周 EMA，而不是抓更低的周线 ST。"""
+    kp = key_pivots(_weekly(st_line=1644.0, ma200w=2500.0, ema20w=2072.0), 2467.0)
+    assert kp["structural_line"]["basis"] == "20 周 EMA"
+
+
+def test_structural_line_uses_supertrend_only_as_last_resort():
+    kp = key_pivots(_weekly(st_line=90000.0), 100000.0)
+    assert kp["structural_line"]["basis"] == "周线 SuperTrend"
 
 
 def test_distance_pct_signs():
