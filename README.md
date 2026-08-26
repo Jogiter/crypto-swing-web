@@ -50,6 +50,46 @@ python run_analysis.py
 
 ## 主观层：AI 分析方案
 
+分析本身在本仓库内运行——GitHub Actions 每天先跑机械层，再调 Claude API
+执行 `skills/crypto-swing-analysis/`（版本化的分析框架），产出结构化方案与
+完整报告，直接提交回仓库。没有外部会话、没有手工搬运。
+
+```
+run_analysis.py   → docs/data/latest.json     机械层：K线、指标、支撑阻力、几何
+                         ↓ 作为既有事实喂给 AI（明确禁止重算）
+run_ai_analysis.py → docs/data/playbook.json  主观层：方向、信心、仓位、分批
+                     docs/ai-reports/*.md     完整中文报告
+```
+
+AI 只做两件机械层做不到的事：**判断**（方向偏好、信心等级、仓位与分批权重），
+以及**抓机械层抓不到的数据**（ETF 流向、链上指标、宏观与 IPO 信号）。K 线与
+技术指标直接采信机械层，既省 token，也避免两层数据源不同导致价格对不上。
+
+### 运行与容错
+
+| 情况 | 行为 |
+|---|---|
+| 未配置 `ANTHROPIC_API_KEY` | 跳过 AI 层，机械层照常发布 |
+| key 无效 / 权限不足 | 红色注解 + 状态文件，保留上一版方案 |
+| 限流 / 网络 / 服务器错误 | 黄色注解，下次定时任务自动重试 |
+| 输出未通过契约校验 | 回喂错误重试一次，仍失败则**不覆盖**已有方案 |
+| 本月支出达上限 | 跳过并告警（`MONTHLY_BUDGET_USD`） |
+
+失败在三处可见：Actions 注解、`docs/data/ai-status.json`、以及页面顶部的状态条
+（区分「今天没更新」和「今天没跑成」）。
+
+### 安全
+
+- workflow 按 job 拆分权限：**持有 API key 的 job 没有写权限，有写权限的 job 拿不到 key**
+- 绝不使用 `pull_request_target`（会在 fork PR 上下文交出 secrets）
+- 本仓库是 public，运行日志公开：所有输出经 `redact()` 过滤凭据模式，不打印环境变量
+- key 只注入需要它的单个 step
+
+配置：在 Settings → Secrets and variables → Actions 添加 `ANTHROPIC_API_KEY`。
+建议用专用 key 并在创建时设置过期时间（过期只能在创建时指定）。
+
+
+
 `docs/data/playbook.json` 承载 skill 报告里的做多方案（分批入场、多层止损、
 分批止盈、多口径风险回报比、加仓硬条件），页面以「AI 分析方案」区块渲染，
 与机械层视觉区分。

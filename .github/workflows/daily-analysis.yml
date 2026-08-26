@@ -6,20 +6,27 @@ on:
     - cron: "15 0 * * *"
   workflow_dispatch: {}
 
+# 安全约定，改动前请三思：
+#   * 绝不添加 pull_request_target —— 它会在 fork PR 的上下文里交出本仓库的
+#     secrets，是 Actions 最经典的漏洞形态。本工作流只需 schedule + dispatch。
+#   * 权限按 job 最小化：持有 API key 的 job 没有写权限，有写权限的 job 拿不到
+#     API key。单个环节失陷（比如某个 pip 依赖被投毒）不至于同时丢掉两者。
+#   * 本仓库是 public，运行日志任何人可见：不要 echo 环境变量、不要 set -x、
+#     不要设 ANTHROPIC_LOG=debug（它会打印请求头）。
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: analysis
   cancel-in-progress: false
 
 jobs:
-  analyze:
+  # ---------- 机械层：纯量化，无任何密钥 ----------
+  mechanical:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -34,6 +41,80 @@ jobs:
 
       - name: Run analysis
         run: python run_analysis.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mechanical
+          path: |
+            docs/data/
+            docs/reports/
+            reports/
+          retention-days: 1
+
+  # ---------- 主观层：持有 API key，但没有写权限 ----------
+  ai:
+    needs: mechanical
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    continue-on-error: true      # 本层失败绝不阻断机械层的发布
+    permissions:
+      contents: read             # 明确不给 write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: mechanical
+          path: .
+
+      - name: Run AI analysis
+        env:
+          # 只注入这一步，不暴露给 job 内其他步骤
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python run_ai_analysis.py
+
+      - name: Upload AI outputs
+        if: always()             # 失败时也要带出 ai-status.json
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai
+          path: |
+            docs/data/playbook.json
+            docs/data/ai-status.json
+            docs/data/ai-usage/
+            docs/ai-reports/
+          if-no-files-found: ignore
+          retention-days: 1
+
+  # ---------- 提交：有写权限，但拿不到任何密钥 ----------
+  commit:
+    needs: [mechanical, ai]
+    if: always() && needs.mechanical.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: mechanical
+          path: .
+
+      - name: Download AI outputs
+        continue-on-error: true  # AI 层可能没产出，不影响机械层提交
+        uses: actions/download-artifact@v4
+        with:
+          name: ai
+          path: .
 
       - name: Commit results
         run: |

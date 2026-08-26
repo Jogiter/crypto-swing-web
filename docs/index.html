@@ -83,6 +83,13 @@ table.klv th:first-child,table.klv td:first-child{text-align:left}
 table.klv tbody tr:last-child td{border-bottom:none}
 table.klv .coin{font-weight:700}
 table.klv .dist{color:var(--muted);font-size:11px;display:block;font-weight:400}
+/* AI 层运行状态——失败要在产品界面可见，不能只躺在 CI 日志里 */
+.aistat{margin-top:14px;padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.6;
+  border:1px solid var(--border);background:var(--surface)}
+.aistat.warn{border-color:var(--warning)}
+.aistat.err{border-color:var(--critical)}
+.aistat b{font-weight:700}
+.aistat .sub{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 /* 做多方案（主观层）——来自 AI 分析，与机械计算显著区分 */
 .hplan{margin-top:10px;border:1px solid var(--human);border-radius:10px;overflow:hidden}
 .hplan>summary{list-style:none;cursor:pointer;padding:10px 12px;background:var(--human-soft);
@@ -150,6 +157,7 @@ footer{margin-top:34px;color:var(--muted);font-size:12.5px;border-top:1px solid 
   <div class="stamp">纯量化脚本每日自动生成 · 加权评分 SRSI25/MACD25/MFI20/Vol15/ST15 · ≥70 做多 / ≤30 离场</div>
 
   <div class="tldr" id="tldr" hidden></div>
+  <div id="aistatus"></div>
   <div id="keylevels"></div>
   <div class="grid" id="coins"></div>
   <div class="grid" id="aux"></div>
@@ -234,6 +242,45 @@ function coinCard(name, cd, pb){
     ${geometryHtml(cd.geometry)}
     ${planSection(name, cd, pb)}
   </div>`;
+}
+// AI 层状态：区分「今天没更新」和「今天没跑成」——后者用户有权知道
+const AI_STATUS_TEXT = {
+  auth_failed:       ["err",  "API 认证失败"],
+  permission_denied: ["err",  "API 权限不足"],
+  bad_request:       ["err",  "请求无效（代码问题）"],
+  budget_exceeded:   ["err",  "已达月度支出上限"],
+  config_error:      ["err",  "配置错误"],
+  rate_limited:      ["warn", "API 限流或额度耗尽"],
+  connection_error:  ["warn", "网络故障"],
+  api_error:         ["warn", "API 返回错误"],
+  temp_failure:      ["warn", "临时故障"],
+  invalid_output:    ["warn", "输出未通过契约校验"],
+  refused:           ["warn", "模型拒绝了本次请求"],
+};
+function aiStatusHtml(st, pb){
+  // ok 与 skipped_no_key 都不打扰：前者正常，后者是尚未配置的预期状态
+  if(!st || st.status === "ok" || st.status === "skipped_no_key") return "";
+  const [cls, label] = AI_STATUS_TEXT[st.status] || ["warn", "运行失败"];
+  const when = st.last_attempt_utc ? new Date(st.last_attempt_utc) : null;
+  const whenTxt = when && !isNaN(when)
+    ? when.toLocaleString("zh-CN",{timeZone:"Asia/Shanghai",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"})
+    : "";
+  let tail = "";
+  if(pb?.generated_at_utc){
+    const g = new Date(pb.generated_at_utc);
+    if(!isNaN(g)){
+      const days = Math.floor((Date.now()-g.getTime())/864e5);
+      // 方案还是当天的就不必强调「仍是」——那不算旧，只是这次没跑成
+      tail = days >= 1
+        ? `当前显示的仍是 ${days} 天前（${g.toLocaleDateString("zh-CN",{timeZone:"Asia/Shanghai"})}）的方案`
+        : "机械层不受影响，AI 方案维持上一次的结果";
+    }
+  } else {
+    tail = "尚无可用的 AI 方案，页面仅显示机械层结果";
+  }
+  return `<div class="aistat ${cls}">${cls==="err"?"⛔":"⚠️"}
+    <b>AI 分析层：${esc(label)}</b>${whenTxt?` · ${esc(whenTxt)}`:""}
+    <span class="sub">${esc(st.detail||"")}${tail?" ｜ "+esc(tail):""}</span></div>`;
 }
 function keyLevelsCard(d){
   const TFS = [["4h","4H"],["1d","日线"]];
@@ -545,12 +592,16 @@ async function main(){
   if(d.macro?.regime?.etf_note) tl.push(esc(d.macro.regime.etf_note));
   if(tl.length){ $("#tldr").hidden = false; $("#tldr").innerHTML = tl.map(x=>`<div>${x}</div>`).join(""); }
   // coins
-  // 主观层：独立文件，缺失或损坏都不影响机械层渲染
-  let pb = null;
-  try{
-    const r = await fetch("data/playbook.json", {cache:"no-store"});
-    if(r.ok) pb = await r.json();
-  }catch(e){ pb = null; }
+  // 主观层与其运行状态：独立文件，缺失或损坏都不影响机械层渲染
+  const loadJSON = async (p) => {
+    try{ const r = await fetch(p, {cache:"no-store"}); return r.ok ? await r.json() : null; }
+    catch(e){ return null; }
+  };
+  const [pb, aiStatus] = await Promise.all([
+    loadJSON("data/playbook.json"),
+    loadJSON("data/ai-status.json"),
+  ]);
+  $("#aistatus").innerHTML = aiStatusHtml(aiStatus, pb);
 
   $("#keylevels").innerHTML = keyLevelsCard(d);
   $("#coins").innerHTML = ["BTC","ETH","SOL"].map(c => d.coins?.[c] ? coinCard(c, d.coins[c], pb) : "").join("");
