@@ -49,6 +49,49 @@ def _signal_emoji(sig):
     return {"做多信号": "🟢", "离场信号": "🔴", "观望": "🟡"}.get(sig, "⚪")
 
 
+def _geometry_block(g):
+    """渲染交易几何（纯计算，不含方向判断）。"""
+    if not g:
+        return ""
+    out = ["\n**交易几何（纯计算 · 非入场建议）**\n"]
+    if g.get("entry_ref"):
+        out.append(f"- 参考入场：**${_fmt_price(g['entry_ref'])}**（{g.get('entry_basis', '')}）")
+    for st in g.get("stops", []):
+        d = st.get("distance_pct")
+        dist = f"，距现价 {d:+.2f}%" if d is not None else ""
+        out.append(f"- {st['name']}：**${_fmt_price(st['price'])}**（{st.get('basis', '')}{dist}）")
+    for t in g.get("targets", []):
+        d = t.get("distance_pct")
+        dist = f"，距现价 {d:+.2f}%" if d is not None else ""
+        out.append(f"- {t['name']}：**${_fmt_price(t['price'])}**（{t.get('basis', '')}{dist}）— {t.get('plan', '')}")
+    rr = g.get("rr") or {}
+    if rr:
+        out.append("- **风险回报比**：" + "，".join(f"{k} **{v}:1**" for k, v in rr.items()))
+        if g.get("rr_basis"):
+            out.append(f"  - {g['rr_basis']}")
+    for n in g.get("notes", []):
+        out.append(f"- ⚠️ {n}")
+    return "\n".join(out) + "\n"
+
+
+def _conditions_section(tc):
+    """渲染前瞻性触发阈值。"""
+    if not tc or (not tc.get("offense") and not tc.get("defense")):
+        return ""
+    out = ["\n---\n\n## 触发阈值（前瞻条件 · 盯这些才改变决策）\n"]
+    for key, title, icon in [("offense", "转进攻条件", "🟢"), ("defense", "转防御条件", "🔴")]:
+        items = tc.get(key) or []
+        if not items:
+            continue
+        out.append(f"\n### {icon} {title}\n")
+        out.append("| 条件 | 状态 | 当前 | 差距 |")
+        out.append("|---|:--:|---|---|")
+        for c in items:
+            mark = "✅ 已满足" if c["met"] else "○ 未满足"
+            out.append(f"| {c['condition']} | {mark} | {c.get('current', '—')} | {c.get('gap') or '—'} |")
+    return "\n".join(out) + "\n"
+
+
 def build_report(d):
     md = []
     md.append(f"# 加密波段量化快照 · {d['date']}\n")
@@ -64,7 +107,7 @@ def build_report(d):
             uniq = sorted(set(s.values()))
             src_notes.append(f"{coin}: {'/'.join(uniq)}")
     md.append("> **K线来源**：" + "；".join(src_notes) +
-              "。辅助数据：alternative.me（恐惧贪婪）、CoinMetrics 社区版（MVRV）、Yahoo Finance（美股）、Farside（ETF，尽力抓取）。\n")
+              "。辅助数据：alternative.me（恐惧贪婪）、CoinMetrics 社区版（MVRV/Z-Score）、colintalkscrypto（CBBI）、Yahoo Finance（美股）、Farside（ETF，尽力抓取）。\n")
 
     # TL;DR
     md.append("\n## TL;DR（规则生成）\n")
@@ -115,6 +158,9 @@ def build_report(d):
             md.append(_levels_lines(fr.get("levels")))
             if tf == "4h":
                 md.append("\n" + _score_table(sc))
+                geo = _geometry_block(cd.get("geometry"))
+                if geo:
+                    md.append(geo)
             else:
                 st = sc.get("supertrend", {})
                 md.append(f"  - 指标概要：MACD柱 {sc.get('macd', {}).get('hist', '—')}，"
@@ -136,8 +182,27 @@ def build_report(d):
                       f"泡沫带 ${_fmt_price(pl['top'])}，当前位于走廊 **{pl['position_pct']}%** 处（0=下轨）。{pl['note']}")
         mv = cyc.get("mvrv")
         if mv:
-            zone = "⚠️ 过热区(>3)" if mv["value"] > 3 else ("🟦 历史底部区(<1)" if mv["value"] < 1 else "中性区")
-            md.append(f"- **MVRV**：{mv['value']}（{mv['date']}，CoinMetrics）→ {zone}")
+            zone = mv.get("zone", "")
+            icon = "⚠️ " if "过热" in zone else ("🟦 " if "底部" in zone else "")
+            parts = [f"- **MVRV**：{mv['value']}（{mv['date']}，CoinMetrics）→ {icon}{zone}"]
+            if mv.get("percentile") is not None:
+                parts.append(f"历史分位 **{mv['percentile']}%**"
+                             f"（{mv.get('history_days', '—')} 天样本）")
+            if mv.get("zscore") is not None:
+                parts.append(f"**MVRV Z-Score {mv['zscore']}**（{mv.get('zscore_zone', '')}）")
+            elif mv.get("zscore_note"):
+                parts.append(f"Z-Score 不可用（{mv['zscore_note']}）")
+            if mv.get("degraded"):
+                parts.append(f"⚠️ {mv['degraded']}")
+            md.append("；".join(parts))
+        cb = cyc.get("cbbi")
+        if cb:
+            zone = cb.get("zone", "")
+            icon = "⚠️ " if "顶部" in zone else ("🟦 " if "底部" in zone else "")
+            line = f"- **CBBI**：{cb['value']}（{cb.get('date', '')}）→ {icon}{zone}"
+            if cb.get("change_30d") is not None:
+                line += f"；30日变化 {cb['change_30d']:+.1f}（30日前 {cb.get('value_30d_ago')}）"
+            md.append(line)
 
     # 宏观
     md.append("\n---\n\n## 美股与风险偏好\n")
@@ -170,11 +235,16 @@ def build_report(d):
         md.append(f"- 机械应对：{regime.get('action')}")
         md.append(f"- {regime.get('confidence')}")
 
-    # 触发提醒
+    # 信号灯（当前状态）
     if d.get("triggers"):
-        md.append("\n---\n\n## 信号灯与触发提醒（机械规则）\n")
+        md.append("\n---\n\n## 信号灯（当前状态快照）\n")
         for t in d["triggers"]:
             md.append(f"- {t}")
+
+    # 触发阈值（前瞻性可验证条件）
+    cond_md = _conditions_section(d.get("trigger_conditions"))
+    if cond_md:
+        md.append(cond_md)
 
     # 缺失
     if d.get("missing"):
@@ -184,7 +254,9 @@ def build_report(d):
 
     md.append("\n---\n\n## 免责声明\n")
     md.append(f"{d['disclaimer']}\n")
-    md.append("本工具**不输出**入场/止损/仓位等实操建议——这些依赖对行情性质的综合判断，请结合人工分析"
-              "（或在 Claude 中运行 crypto-swing-analysis skill）自行决策。纪律提示：止损触发后禁止向下摊平；"
-              "超卖不构成入场理由；重建仓位需等右侧确认。\n")
+    md.append("本工具**不判断是否应当入场、方向偏好或仓位大小**——这些依赖对行情性质的综合判断，"
+              "请结合人工分析（或在 Claude 中运行 crypto-swing-analysis skill）自行决策。\n\n"
+              "「交易几何」一节是**纯几何计算**：以现价为参考入场点，按已算出的结构位推导止损/目标/风险回报比，"
+              "回答的是「若做多，止损该放哪、赔率是多少」，而非「现在该不该做多」。\n\n"
+              "纪律提示：止损触发后禁止向下摊平；超卖不构成入场理由；重建仓位需等右侧确认。\n")
     return "\n".join(md)

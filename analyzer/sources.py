@@ -222,16 +222,195 @@ def fear_greed():
     }
 
 
+def _coinmetrics_series(metrics, asset="btc", max_pages=10, page_size=1000):
+    """拉取 CoinMetrics 社区版全历史日线序列，返回 [{time, <metric>...}, ...]（时间升序）。
+
+    社区版免费、无需 key，但有分页；这里最多翻 max_pages 页（足够覆盖 BTC 全历史）。
+    """
+    url = "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics"
+    params = {"assets": asset, "metrics": ",".join(metrics), "frequency": "1d",
+              "page_size": page_size, "paging_from": "start"}
+    rows = []
+    for _ in range(max_pages):
+        r = _get(url, params=params)
+        j = r.json()
+        rows += j.get("data", [])
+        nxt = j.get("next_page_token")
+        if not nxt:
+            break
+        params = dict(params, next_page_token=nxt)
+    return rows
+
+
+def _to_float(row, key):
+    v = row.get(key)
+    if v in (None, ""):
+        return None
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
 def mvrv_btc():
-    """CoinMetrics 社区版 API，免费。CapMVRVCur = BTC MVRV。"""
+    """BTC MVRV：读数 + 历史分位 + Z-Score，逐级降级，能拿多少拿多少。
+
+    CoinMetrics 社区版（免费无 key）只开放部分指标：CapMVRVCur 可用，
+    而 Z-Score 所需的 CapMrktCurUSD / CapRealUSD 会返回 403。
+    因此三项分别独立请求——市值序列拿不到时，历史分位仍然保留。
+    """
+    try:
+        out = _mvrv_with_percentile()
+    except Exception as e:  # noqa: BLE001
+        log.warning("mvrv history failed, falling back to latest-only: %s", e)
+        return _mvrv_latest_only()
+
+    try:
+        out.update(_mvrv_zscore())
+    except Exception as e:  # noqa: BLE001
+        log.warning("mvrv z-score unavailable (community tier lacks cap metrics): %s", e)
+        out["zscore_note"] = "社区版无市值/实现市值序列权限"
+    return out
+
+
+def _mvrv_latest_only():
+    """最低降级：只取最近一条 MVRV 读数（请求极小、几乎必成功）。"""
     r = _get("https://community-api.coinmetrics.io/v4/timeseries/asset-metrics",
              params={"assets": "btc", "metrics": "CapMVRVCur", "frequency": "1d",
                      "page_size": 10, "paging_from": "end"})
     rows = r.json().get("data", [])
+    for row in reversed(rows):
+        v = _to_float(row, "CapMVRVCur")
+        if v is not None:
+            return {"value": round(v, 3), "date": str(row.get("time", ""))[:10],
+                    "zone": mvrv_zone(v), "degraded": "全历史序列不可用，缺历史分位与 Z-Score"}
+    raise RuntimeError("no mvrv data")
+
+
+def _mvrv_with_percentile():
+    """MVRV 全历史 → 当前读数 + 历史分位。只请求社区版确定可用的 CapMVRVCur。"""
+    rows = _coinmetrics_series(["CapMVRVCur"])
     if not rows:
         raise RuntimeError("no mvrv data")
-    last = rows[-1]
-    return {"value": round(float(last["CapMVRVCur"]), 3), "date": last["time"][:10]}
+
+    hist = [v for v in (_to_float(x, "CapMVRVCur") for x in rows) if v is not None]
+    if not hist:
+        raise RuntimeError("no mvrv values")
+
+    last, value = rows[-1], _to_float(rows[-1], "CapMVRVCur")
+    if value is None:
+        for x in reversed(rows):
+            value = _to_float(x, "CapMVRVCur")
+            if value is not None:
+                last = x
+                break
+    if value is None:
+        raise RuntimeError("no usable mvrv value")
+
+    arr = np.asarray(hist, dtype=float)
+    return {
+        "value": round(value, 3),
+        "date": str(last.get("time", ""))[:10],
+        "zone": mvrv_zone(value),
+        "history_days": len(hist),
+        "percentile": round(float((arr <= value).sum()) / len(arr) * 100, 1),
+    }
+
+
+def _mvrv_zscore():
+    """MVRV Z-Score = (市值 - 实现市值) / 市值全历史标准差。
+
+    这两个指标在社区版免费层通常无权限（403），调用方需容忍失败。
+    """
+    rows = _coinmetrics_series(["CapMrktCurUSD", "CapRealUSD"])
+    caps = [c for c in (_to_float(x, "CapMrktCurUSD") for x in rows) if c is not None]
+    if len(caps) <= 30:
+        raise RuntimeError("market cap series too short")
+
+    mkt = real = None
+    for x in reversed(rows):
+        if mkt is None:
+            mkt = _to_float(x, "CapMrktCurUSD")
+        if real is None:
+            real = _to_float(x, "CapRealUSD")
+        if mkt is not None and real is not None:
+            break
+    if mkt is None or real is None:
+        raise RuntimeError("missing cap values")
+
+    sd = float(np.std(np.asarray(caps, dtype=float)))
+    if sd <= 0:
+        raise RuntimeError("zero stddev")
+    z = (mkt - real) / sd
+    return {"zscore": round(z, 2), "zscore_zone": mvrv_z_zone(z)}
+
+
+def mvrv_zone(v):
+    if v > 3:
+        return "过热区(>3)"
+    if v < 1:
+        return "历史底部区(<1)"
+    return "中性区"
+
+
+def mvrv_z_zone(z):
+    """MVRV Z-Score 常用分区：>7 顶部泡沫，<0 深度价值。"""
+    if z > 7:
+        return "顶部泡沫区(>7)"
+    if z > 3.5:
+        return "偏热(>3.5)"
+    if z < 0:
+        return "深度价值区(<0)"
+    if z < 1:
+        return "低估区(<1)"
+    return "中性区"
+
+
+def cbbi():
+    """CBBI（colintalkscrypto Bitcoin Bull Run Index）：综合周期指数 0-100。
+
+    数据源返回各子指标的 {unix_ts: value} 映射，'Confidence' 即 CBBI 主指数（0-1）。
+    """
+    r = _get("https://colintalkscrypto.com/cbbi/data/latest.json")
+    j = r.json()
+    conf = j.get("Confidence") or {}
+    if not conf:
+        raise RuntimeError("no cbbi confidence series")
+    ts = max(conf.keys(), key=lambda k: int(k))
+    raw = conf[ts]
+    if raw is None:
+        raise RuntimeError("cbbi latest value is null")
+    value = round(float(raw) * 100, 1)
+
+    out = {
+        "value": value,
+        "date": dt.datetime.fromtimestamp(int(ts), dt.timezone.utc).strftime("%Y-%m-%d"),
+        "zone": cbbi_zone(value),
+    }
+
+    # 30 天前对照，给出周期方向
+    try:
+        keys = sorted(conf.keys(), key=lambda k: int(k))
+        prev_key = keys[-31] if len(keys) > 31 else keys[0]
+        prev = conf.get(prev_key)
+        if prev is not None:
+            out["value_30d_ago"] = round(float(prev) * 100, 1)
+            out["change_30d"] = round(out["value"] - out["value_30d_ago"], 1)
+    except (ValueError, IndexError):  # noqa: PERF203
+        pass
+    return out
+
+
+def cbbi_zone(v):
+    if v >= 90:
+        return "周期顶部预警(>=90)"
+    if v >= 70:
+        return "偏热(70-90)"
+    if v < 15:
+        return "周期底部区(<15)"
+    if v < 30:
+        return "偏冷(15-30)"
+    return "中性区(30-70)"
 
 
 def us_indices():
