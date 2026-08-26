@@ -211,6 +211,7 @@ function cycleCard(d){
     const extra = [];
     if(mv.percentile!=null) extra.push(`分位 ${mv.percentile}%`);
     if(mv.zscore!=null) extra.push(`Z=${mv.zscore}`);
+    if(mv.zscore==null && mv.zscore_note) extra.push("Z-Score 不可用");
     if(mv.degraded) extra.push("降级：仅读数");
     rows += `<div class="kv"><span class="k">MVRV</span><span class="v">${mv.value}
       <span class="lab" style="font-weight:400;color:var(--muted)">${extra.length?" "+esc(extra.join(" · ")):""} ${mv.date||""}</span></span></div>`;

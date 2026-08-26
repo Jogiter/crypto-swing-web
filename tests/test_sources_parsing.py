@@ -6,6 +6,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
+import numpy as np  # noqa: E402
 import pytest  # noqa: E402
 
 from analyzer import sources  # noqa: E402
@@ -44,66 +45,115 @@ def test_cbbi_zone(v, expect):
 
 # ---------------- MVRV 解析 ----------------
 
-def _cm_rows(n=100):
-    """构造 CoinMetrics 风格的响应行：MVRV 线性从 1.0 升到 3.0。"""
-    rows = []
-    for i in range(n):
-        mvrv = 1.0 + 2.0 * i / (n - 1)
-        rows.append({
-            "asset": "btc",
-            "time": f"2026-01-{(i % 28) + 1:02d}T00:00:00.000000000Z",
-            "CapMVRVCur": str(mvrv),
-            "CapMrktCurUSD": str(1e12 * mvrv),
-            "CapRealUSD": str(1e12),
-        })
-    return rows
+def _mvrv_rows(n=100, lo=1.0, hi=3.0):
+    """CoinMetrics 风格的 MVRV 序列，线性从 lo 升到 hi。"""
+    return [{"asset": "btc",
+             "time": f"2026-01-{(i % 28) + 1:02d}T00:00:00.000000000Z",
+             "CapMVRVCur": str(lo + (hi - lo) * i / (n - 1))} for i in range(n)]
 
 
-def test_mvrv_parses_value_percentile_and_zscore(monkeypatch):
-    rows = _cm_rows(100)
-    monkeypatch.setattr(sources, "_get", lambda *a, **k: _Resp({"data": rows}))
+def _cap_rows(n=100):
+    return [{"asset": "btc",
+             "time": f"2026-01-{(i % 28) + 1:02d}T00:00:00.000000000Z",
+             "CapMrktCurUSD": str(1e12 + 1e10 * i),
+             "CapRealUSD": str(8e11)} for i in range(n)]
+
+
+def _router(mvrv=None, caps=None):
+    """按请求的 metrics 分派响应；传入 Exception 实例表示该请求失败。"""
+    def fake_get(url, params=None, **kw):
+        metrics = (params or {}).get("metrics", "")
+        target = mvrv if "CapMVRVCur" in metrics else caps
+        if isinstance(target, Exception):
+            raise target
+        return _Resp({"data": target or []})
+    return fake_get
+
+
+def test_mvrv_parses_value_and_percentile(monkeypatch):
+    monkeypatch.setattr(sources, "_get", _router(mvrv=_mvrv_rows(100), caps=_cap_rows()))
     out = sources.mvrv_btc()
     assert out["value"] == 3.0
-    assert out["zone"] == "中性区"          # 3.0 不 > 3
     assert out["percentile"] == 100.0       # 末值为序列最大
     assert out["history_days"] == 100
     assert out["date"] == "2026-01-16"
-    # Z = (mkt - real) / std(mkt)
-    assert isinstance(out["zscore"], float)
-    assert out["zscore_zone"] in {"中性区", "偏热(>3.5)", "顶部泡沫区(>7)", "低估区(<1)", "深度价值区(<0)"}
+    assert out["zscore"] is not None
 
 
-def test_mvrv_percentile_midpoint(monkeypatch):
+def test_mvrv_percentile_reflects_rank(monkeypatch):
     """末值处于历史中位时，分位应接近 50%。"""
-    rows = _cm_rows(101)
-    mid = rows[50]
-    rows = rows[:51]              # 让末行成为中位值
-    rows[-1] = dict(mid)
-    monkeypatch.setattr(sources, "_get", lambda *a, **k: _Resp({"data": rows}))
+    rows = _mvrv_rows(101)
+    rows.append(dict(rows[50]))             # 末行取中位值
+    monkeypatch.setattr(sources, "_get", _router(mvrv=rows, caps=_cap_rows()))
     out = sources.mvrv_btc()
-    assert 95 <= out["percentile"] <= 100  # 截断后末值即最大值
+    assert 48 <= out["percentile"] <= 53, out["percentile"]
 
 
-def test_mvrv_falls_back_when_last_row_null(monkeypatch):
-    rows = _cm_rows(50)
-    rows[-1]["CapMVRVCur"] = None
-    monkeypatch.setattr(sources, "_get", lambda *a, **k: _Resp({"data": rows}))
+def test_zscore_403_still_keeps_percentile(monkeypatch):
+    """真实回归：社区版对市值指标返回 403 时，历史分位必须保留。
+
+    这正是 2026-08-26 首次 Actions 运行暴露的问题——当时三个指标打包在
+    同一请求里，403 让分位和 Z-Score 一起丢失，只剩降级读数。
+    """
+    monkeypatch.setattr(sources, "_get", _router(
+        mvrv=_mvrv_rows(200), caps=RuntimeError("GET ... failed: HTTP 403")))
     out = sources.mvrv_btc()
-    assert out["value"] is not None
+    assert out["percentile"] is not None     # 分位保住
+    assert out["history_days"] == 200
+    assert "zscore" not in out               # Z-Score 缺席
+    assert "社区版无市值" in out["zscore_note"]
+    assert "degraded" not in out             # 未跌到最低降级档
 
 
-def test_mvrv_raises_on_empty(monkeypatch):
-    monkeypatch.setattr(sources, "_get", lambda *a, **k: _Resp({"data": []}))
+def test_mvrv_falls_back_to_latest_only_when_history_fails(monkeypatch):
+    """MVRV 序列本身失败时，才降到只取读数。"""
+    def fake_get(url, params=None, **kw):
+        if (params or {}).get("page_size") == 1000:
+            raise RuntimeError("HTTP 403")
+        return _Resp({"data": [{"time": "2026-08-24T00:00:00Z", "CapMVRVCur": "2.15"}]})
+
+    monkeypatch.setattr(sources, "_get", fake_get)
+    out = sources.mvrv_btc()
+    assert out["value"] == 2.15
+    assert "degraded" in out
+    assert "percentile" not in out
+
+
+def test_mvrv_raises_when_everything_fails(monkeypatch):
+    def fake_get(url, params=None, **kw):
+        if (params or {}).get("page_size") == 1000:
+            raise RuntimeError("boom")
+        return _Resp({"data": []})
+
+    monkeypatch.setattr(sources, "_get", fake_get)
     with pytest.raises(RuntimeError):
         sources.mvrv_btc()
 
 
-def test_mvrv_skips_zscore_without_cap_series(monkeypatch):
-    rows = [{"time": "2026-01-01T00:00:00Z", "CapMVRVCur": "2.0"} for _ in range(40)]
-    monkeypatch.setattr(sources, "_get", lambda *a, **k: _Resp({"data": rows}))
+def test_mvrv_handles_null_trailing_value(monkeypatch):
+    rows = _mvrv_rows(50)
+    rows[-1]["CapMVRVCur"] = None
+    monkeypatch.setattr(sources, "_get", _router(mvrv=rows, caps=_cap_rows()))
+    out = sources.mvrv_btc()
+    assert out["value"] is not None
+
+
+def test_zscore_math(monkeypatch):
+    """Z = (市值 - 实现市值) / 市值标准差。"""
+    caps = _cap_rows(100)
+    monkeypatch.setattr(sources, "_get", _router(mvrv=_mvrv_rows(100), caps=caps))
+    out = sources.mvrv_btc()
+    mkt = float(caps[-1]["CapMrktCurUSD"])
+    real = float(caps[-1]["CapRealUSD"])
+    series = np.asarray([float(c["CapMrktCurUSD"]) for c in caps])
+    assert out["zscore"] == round((mkt - real) / float(series.std()), 2)
+
+
+def test_zscore_skipped_when_series_too_short(monkeypatch):
+    monkeypatch.setattr(sources, "_get", _router(mvrv=_mvrv_rows(60), caps=_cap_rows(5)))
     out = sources.mvrv_btc()
     assert "zscore" not in out
-    assert out["percentile"] == 100.0
+    assert out["percentile"] is not None
 
 
 # ---------------- CBBI 解析 ----------------
@@ -153,36 +203,6 @@ def test_cbbi_raises_on_null_latest(monkeypatch):
 
 
 # ---------------- 降级与分页 ----------------
-
-def test_mvrv_falls_back_to_latest_only(monkeypatch):
-    """全历史请求失败时应降级取最新读数，而不是整体失败。"""
-    calls = {"n": 0}
-
-    def fake_get(url, params=None, **kw):
-        calls["n"] += 1
-        if params and params.get("page_size") == 10000:
-            raise RuntimeError("HTTP 400 page_size too large")
-        return _Resp({"data": [{"time": "2026-08-24T00:00:00Z", "CapMVRVCur": "2.15"}]})
-
-    monkeypatch.setattr(sources, "_get", fake_get)
-    out = sources.mvrv_btc()
-    assert out["value"] == 2.15
-    assert out["zone"] == "中性区"
-    assert "degraded" in out
-    assert "percentile" not in out
-    assert calls["n"] >= 2
-
-
-def test_mvrv_fallback_raises_when_both_fail(monkeypatch):
-    def fake_get(url, params=None, **kw):
-        if params and params.get("page_size") == 10000:
-            raise RuntimeError("boom")
-        return _Resp({"data": []})
-
-    monkeypatch.setattr(sources, "_get", fake_get)
-    with pytest.raises(RuntimeError):
-        sources.mvrv_btc()
-
 
 def test_coinmetrics_series_follows_pagination(monkeypatch):
     pages = [

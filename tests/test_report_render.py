@@ -121,3 +121,28 @@ def test_disclaimer_distinguishes_geometry_from_advice():
     assert "不判断是否应当入场" in md
     assert "纯几何计算" in md
     assert "禁止向下摊平" in md
+
+
+def test_report_explains_missing_zscore():
+    """Z-Score 因社区版权限缺席时，报告应说明原因而非静默省略。"""
+    d = _full_data()
+    d["btc_cycle"]["mvrv"] = {
+        "value": 1.491, "date": "2026-08-24", "zone": "中性区",
+        "percentile": 62.0, "history_days": 5800,
+        "zscore_note": "社区版无市值/实现市值序列权限，Z-Score 不可用",
+    }
+    md = build_report(d)
+    assert "历史分位 **62.0%**" in md
+    assert "Z-Score 不可用" in md
+    assert "MVRV Z-Score" not in md
+
+
+def test_report_flags_fully_degraded_mvrv():
+    d = _full_data()
+    d["btc_cycle"]["mvrv"] = {
+        "value": 1.491, "date": "2026-08-24", "zone": "中性区",
+        "degraded": "全历史序列不可用，缺历史分位与 Z-Score",
+    }
+    md = build_report(d)
+    assert "全历史序列不可用" in md
+    assert "历史分位 **" not in md      # 不渲染分位数值，仅说明为何缺失

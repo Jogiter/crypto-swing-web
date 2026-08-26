@@ -190,6 +190,10 @@ def build_report(d):
                              f"（{mv.get('history_days', '—')} 天样本）")
             if mv.get("zscore") is not None:
                 parts.append(f"**MVRV Z-Score {mv['zscore']}**（{mv.get('zscore_zone', '')}）")
+            elif mv.get("zscore_note"):
+                parts.append(f"Z-Score 不可用（{mv['zscore_note']}）")
+            if mv.get("degraded"):
+                parts.append(f"⚠️ {mv['degraded']}")
             md.append("；".join(parts))
         cb = cyc.get("cbbi")
         if cb:

@@ -222,14 +222,14 @@ def fear_greed():
     }
 
 
-def _coinmetrics_series(metrics, asset="btc", max_pages=4):
+def _coinmetrics_series(metrics, asset="btc", max_pages=10, page_size=1000):
     """拉取 CoinMetrics 社区版全历史日线序列，返回 [{time, <metric>...}, ...]（时间升序）。
 
     社区版免费、无需 key，但有分页；这里最多翻 max_pages 页（足够覆盖 BTC 全历史）。
     """
     url = "https://community-api.coinmetrics.io/v4/timeseries/asset-metrics"
     params = {"assets": asset, "metrics": ",".join(metrics), "frequency": "1d",
-              "page_size": 10000, "paging_from": "start"}
+              "page_size": page_size, "paging_from": "start"}
     rows = []
     for _ in range(max_pages):
         r = _get(url, params=params)
@@ -253,20 +253,28 @@ def _to_float(row, key):
 
 
 def mvrv_btc():
-    """BTC MVRV 读数 + 历史分位 + MVRV Z-Score（CoinMetrics 社区版，免费）。
+    """BTC MVRV：读数 + 历史分位 + Z-Score，逐级降级，能拿多少拿多少。
 
-    全历史请求（分位/Z-Score 所需）失败时，降级为只取最新读数——
-    保证不弱于「只要 MVRV 数值」的最低要求。
+    CoinMetrics 社区版（免费无 key）只开放部分指标：CapMVRVCur 可用，
+    而 Z-Score 所需的 CapMrktCurUSD / CapRealUSD 会返回 403。
+    因此三项分别独立请求——市值序列拿不到时，历史分位仍然保留。
     """
     try:
-        return _mvrv_full()
+        out = _mvrv_with_percentile()
     except Exception as e:  # noqa: BLE001
-        log.warning("mvrv full-history failed, falling back to latest-only: %s", e)
+        log.warning("mvrv history failed, falling back to latest-only: %s", e)
         return _mvrv_latest_only()
+
+    try:
+        out.update(_mvrv_zscore())
+    except Exception as e:  # noqa: BLE001
+        log.warning("mvrv z-score unavailable (community tier lacks cap metrics): %s", e)
+        out["zscore_note"] = "社区版无市值/实现市值序列权限，Z-Score 不可用"
+    return out
 
 
 def _mvrv_latest_only():
-    """轻量降级：只取最近一条 MVRV 读数（原始实现，请求极小、几乎必成功）。"""
+    """最低降级：只取最近一条 MVRV 读数（请求极小、几乎必成功）。"""
     r = _get("https://community-api.coinmetrics.io/v4/timeseries/asset-metrics",
              params={"assets": "btc", "metrics": "CapMVRVCur", "frequency": "1d",
                      "page_size": 10, "paging_from": "end"})
@@ -279,19 +287,18 @@ def _mvrv_latest_only():
     raise RuntimeError("no mvrv data")
 
 
-def _mvrv_full():
-    rows = _coinmetrics_series(["CapMVRVCur", "CapMrktCurUSD", "CapRealUSD"])
+def _mvrv_with_percentile():
+    """MVRV 全历史 → 当前读数 + 历史分位。只请求社区版确定可用的 CapMVRVCur。"""
+    rows = _coinmetrics_series(["CapMVRVCur"])
     if not rows:
         raise RuntimeError("no mvrv data")
 
-    mvrv_hist = [v for v in (_to_float(x, "CapMVRVCur") for x in rows) if v is not None]
-    if not mvrv_hist:
+    hist = [v for v in (_to_float(x, "CapMVRVCur") for x in rows) if v is not None]
+    if not hist:
         raise RuntimeError("no mvrv values")
 
-    last = rows[-1]
-    value = _to_float(last, "CapMVRVCur")
+    last, value = rows[-1], _to_float(rows[-1], "CapMVRVCur")
     if value is None:
-        # 末行缺值时回退到最近一个有效值
         for x in reversed(rows):
             value = _to_float(x, "CapMVRVCur")
             if value is not None:
@@ -300,29 +307,42 @@ def _mvrv_full():
     if value is None:
         raise RuntimeError("no usable mvrv value")
 
-    out = {
+    arr = np.asarray(hist, dtype=float)
+    return {
         "value": round(value, 3),
         "date": str(last.get("time", ""))[:10],
         "zone": mvrv_zone(value),
-        "history_days": len(mvrv_hist),
+        "history_days": len(hist),
+        "percentile": round(float((arr <= value).sum()) / len(arr) * 100, 1),
     }
 
-    # 历史分位（当前值 <= 多少比例的历史样本）
-    arr = np.asarray(mvrv_hist, dtype=float)
-    out["percentile"] = round(float((arr <= value).sum()) / len(arr) * 100, 1)
 
-    # Z-Score：市值与实现市值序列齐全时才算
-    caps = [_to_float(x, "CapMrktCurUSD") for x in rows]
-    caps = [c for c in caps if c is not None]
-    mkt = _to_float(last, "CapMrktCurUSD")
-    real = _to_float(last, "CapRealUSD")
-    if mkt is not None and real is not None and len(caps) > 30:
-        sd = float(np.std(np.asarray(caps, dtype=float)))
-        if sd > 0:
-            z = (mkt - real) / sd
-            out["zscore"] = round(z, 2)
-            out["zscore_zone"] = mvrv_z_zone(z)
-    return out
+def _mvrv_zscore():
+    """MVRV Z-Score = (市值 - 实现市值) / 市值全历史标准差。
+
+    这两个指标在社区版免费层通常无权限（403），调用方需容忍失败。
+    """
+    rows = _coinmetrics_series(["CapMrktCurUSD", "CapRealUSD"])
+    caps = [c for c in (_to_float(x, "CapMrktCurUSD") for x in rows) if c is not None]
+    if len(caps) <= 30:
+        raise RuntimeError("market cap series too short")
+
+    mkt = real = None
+    for x in reversed(rows):
+        if mkt is None:
+            mkt = _to_float(x, "CapMrktCurUSD")
+        if real is None:
+            real = _to_float(x, "CapRealUSD")
+        if mkt is not None and real is not None:
+            break
+    if mkt is None or real is None:
+        raise RuntimeError("missing cap values")
+
+    sd = float(np.std(np.asarray(caps, dtype=float)))
+    if sd <= 0:
+        raise RuntimeError("zero stddev")
+    z = (mkt - real) / sd
+    return {"zscore": round(z, 2), "zscore_zone": mvrv_z_zone(z)}
 
 
 def mvrv_zone(v):
