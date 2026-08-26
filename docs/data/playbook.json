@@ -1,0 +1,117 @@
+{
+  "schema_version": "1.0",
+  "generated_at_utc": "2026-08-26T01:22:00Z",
+  "source": "crypto-swing-analysis skill · Opus",
+  "report_date": "2026-08-26",
+  "price_anchor": { "BTC": 78824, "ETH": 2455, "SOL": 97.0 },
+  "coins": {
+    "BTC": {
+      "bias": "做多",
+      "confidence": "中高",
+      "confidence_reason": "周线评分 70 达标 + ETF 连续 6 日流入 + MVRV Z 0.88 底部区 + LTH 积累创新高；扣分项：周线 SuperTrend 未翻多、日线 RSI 81 极度超买、稳定币未扩张",
+      "entry_batches": [
+        { "batch": 1, "low": 75500, "high": 76500, "weight_pct": 40, "basis": "4H SuperTrend 76,125 附近" },
+        { "batch": 2, "low": 73000, "high": 74000, "weight_pct": 40, "ideal": true, "basis": "斐波 0.236 73,878 + 8/21 低点 73,010" },
+        { "batch": 3, "low": 71000, "high": 71900, "weight_pct": 20, "basis": "日线 ST 71,890 + 日线 EMA200 71,836" }
+      ],
+      "breakout_entry": {
+        "condition": "周线收盘 > 79,466（周线 SuperTrend 翻多）",
+        "note": "回踩不破 79,466 时入场——位置更差但确认度最高，适合不想接回调刀的执行"
+      },
+      "stops": [
+        { "level": 1, "name": "4H 结构止损", "trigger": "日线收盘 < 71,890", "price": 71890, "basis": "日线 SuperTrend", "action": "减至 1/3" },
+        { "level": 2, "name": "最终止损", "trigger": "日线收盘 < 69,100", "price": 69100, "basis": "日线 SMA200 / 20 周 EMA 69,271", "action": "清仓，本轮论点证伪" },
+        { "level": 3, "name": "灾难线", "trigger": "周线收盘 < 64,284", "price": 64284, "basis": "200 周均线", "action": "周期论点全面证伪" }
+      ],
+      "targets": [
+        { "name": "TP1", "price": 81250, "basis": "8/25 高点", "reduce_pct": 25 },
+        { "name": "TP2", "price": 83870, "basis": "斐波 0.382 + 5 月高点 82,792 压力带", "reduce_pct": 30 },
+        { "name": "TP3", "price": 88850, "basis": "100 周均线", "reduce_pct": 25 }
+      ],
+      "trailing": { "remain_pct": 20, "note": "突破 88,850 后转移动止盈，用日线或 4H SuperTrend 跟踪" },
+      "risk_reward": [
+        { "label": "第二批 74,000 + 4H 结构止损", "entry": 74000, "stop": 71890, "target": 83870, "ratio": 4.68, "verdict": "optimal" },
+        { "label": "第二批 75,000 + 最终止损", "entry": 75000, "stop": 69100, "target": 83870, "ratio": 1.5 }
+      ],
+      "position_pct": 50,
+      "position_note": "加密波段总仓的 50%（三者中最高：波动率最低、ETF 支撑最硬、周期估值最扎实）"
+    },
+    "ETH": {
+      "bias": "做多",
+      "confidence": "中高",
+      "confidence_reason": "周线评分 78/82 三者最高、周线 SuperTrend 已翻多、8/17 周放量 2.12× 三者最大、ETF 连续流入；扣分项：现价卡在 200 周均线 2,493 下方两次被拒、4H 放量阴线 1.65×、周线 SRSI 94.9 极端",
+      "entry_batches": [
+        { "batch": 1, "low": 2390, "high": 2420, "weight_pct": 30, "basis": "8/25 低点 2,416 附近" },
+        { "batch": 2, "low": 2320, "high": 2360, "weight_pct": 45, "ideal": true, "basis": "8/23 低点 2,357 + 4H ST 2,346 + 斐波 0.236 2,320" },
+        { "batch": 3, "low": 2165, "high": 2225, "weight_pct": 25, "basis": "8/20 低点 2,222 + 日线 ST/EMA20 2,160" }
+      ],
+      "breakout_entry": {
+        "condition": "日线收盘 > 2,493（200 周均线）且次日不跌回",
+        "note": "中期结构确认，可追 20% 仓位"
+      },
+      "stops": [
+        { "level": 1, "name": "4H 结构止损", "trigger": "4H 收盘 < 2,340", "price": 2340, "basis": "4H SuperTrend 2,346", "action": "减半" },
+        { "level": 2, "name": "日线止损", "trigger": "日线收盘 < 2,155", "price": 2155, "basis": "日线 SuperTrend 2,160", "action": "减至 1/3" },
+        { "level": 3, "name": "周线生死线", "trigger": "周线收盘 < 2,039", "price": 2039, "basis": "20 周 EMA", "action": "清仓（ETH 为弱标的，必须设周线生死线）" }
+      ],
+      "targets": [
+        { "name": "TP1", "price": 2546, "basis": "8/21 高点", "reduce_pct": 25 },
+        { "name": "TP2", "price": 2762, "basis": "100 周均线", "reduce_pct": 30 },
+        { "name": "TP3", "price": 2823, "basis": "斐波 0.382", "reduce_pct": 25 }
+      ],
+      "trailing": { "remain_pct": 20, "note": "转移动止盈" },
+      "risk_reward": [
+        { "label": "入场 2,350 + 日线止损", "entry": 2350, "stop": 2155, "target": 2762, "ratio": 2.11, "verdict": "optimal" },
+        { "label": "入场 2,350 + 日线止损 → TP3", "entry": 2350, "stop": 2155, "target": 2823, "ratio": 2.43 },
+        { "label": "入场 2,350 + 4H 结构止损 2,290", "entry": 2350, "stop": 2290, "target": 2762, "ratio": 6.87, "verdict": "not_recommended" }
+      ],
+      "rr_note": "以 4H 止损 2,340 计风险仅 10 点，过近不建议单用；4H 结构止损 2,290 风险 60 点仍过窄，噪音易扫",
+      "position_pct": 30,
+      "position_note": "加密波段总仓的 30%"
+    },
+    "SOL": {
+      "bias": "做多",
+      "bias_note": "但优先级最低",
+      "confidence": "中",
+      "confidence_reason": "基本面改善最明显（DEX 量 +90.8%、永续 +98.9%、链上稳定币 +3.57%）、10 月 Alpenglow 升级；扣分项：周线 SuperTrend 空头 + 头顶 103.45/105.05/108.76 三线阻力墙、8/25 已被拒绝一次且放量 2.15× 收长上影、日线 MFI 93.4 极端、ETF 体量微不足道",
+      "entry_batches": [
+        { "batch": 1, "low": 92.5, "high": 93.5, "weight_pct": 40, "basis": "8/24 低点 93.23 + 4H ST 92.60" },
+        { "batch": 2, "low": 87.5, "high": 88.5, "weight_pct": 40, "ideal": true, "basis": "8/22 低点 88.06" },
+        { "batch": 3, "low": 84.0, "high": 85.0, "weight_pct": 20, "basis": "日线 EMA20 84.73 + 日线 ST 84.42" }
+      ],
+      "breakout_entry": {
+        "condition": "周线收盘 > 108.76（200 周均线）",
+        "note": "仅站上 103 不足以确认——50 周 EMA 105.05 与 200 周均线 108.76 还在上方"
+      },
+      "stops": [
+        { "level": 1, "name": "4H 结构止损", "trigger": "4H 收盘 < 92.0", "price": 92.0, "basis": "4H SuperTrend 92.60 下方缓冲", "action": "减半" },
+        { "level": 2, "name": "日线止损", "trigger": "日线收盘 < 84.0", "price": 84.0, "basis": "日线 SuperTrend 84.42 / EMA20 84.73", "action": "减至 1/3" },
+        { "level": 3, "name": "最终止损", "trigger": "日线收盘 < 81.0", "price": 81.0, "basis": "日线 SMA200 81.30 / 20 周 EMA 83.26", "action": "清仓，回落大箱体中枢" }
+      ],
+      "targets": [
+        { "name": "TP1", "price": 102.9, "basis": "8/25 高点", "reduce_pct": 30, "note": "这里必须减，因为撞的是三线阻力墙" },
+        { "name": "TP2", "price": 108.76, "basis": "200 周均线", "reduce_pct": 35 },
+        { "name": "TP3", "price": 115.4, "basis": "斐波 0.236", "reduce_pct": 20 }
+      ],
+      "trailing": { "remain_pct": 15, "note": "转移动止盈" },
+      "risk_reward": [
+        { "label": "第二批 88.0 + 日线止损", "entry": 88.0, "stop": 84.0, "target": 108.76, "ratio": 5.19, "verdict": "optimal" },
+        { "label": "第一批 93.0 + 日线止损", "entry": 93.0, "stop": 84.0, "target": 108.76, "ratio": 1.75 }
+      ],
+      "rr_note": "SOL 的 R:R 高度依赖入场价——在 93 上方买入性价比明显劣化，纪律上应把主力仓位留给 88 一线",
+      "position_pct": 20,
+      "position_note": "加密波段总仓的 20%（波动率最高、结构最弱、ETF 支撑最薄）"
+    }
+  },
+  "add_conditions": {
+    "require": "缺一不可",
+    "goal": "全部满足才可把总仓位从 50–60% 提到 100%",
+    "items": [
+      { "condition": "BTC 周线收盘 > 79,466", "note": "周线 SuperTrend 翻多" },
+      { "condition": "BTC 现货 ETF 再录得 ≥3 个交易日净流入", "note": "当前已连续 6 日，需要看到它不是一波脉冲" },
+      { "condition": "4H 综合评分回到 ≥ 70", "note": "构成须含 SRSI 从 <20 金叉上穿 + 放量阳线（量 > 1.2× 20MA）" },
+      { "condition": "稳定币总市值 7 日增速 > +1.5%", "note": "当前仅 +0.81%——验证「有新钱进场」而非「存量轮动 + 空头挤压」的唯一硬指标" }
+    ],
+    "partial_note": "前三条满足而第 4 条不满足时：可加至 75% 仓位，但止盈必须前移一档（BTC 的 TP2 由 83,870 改为 81,250 全部兑现）"
+  }
+}

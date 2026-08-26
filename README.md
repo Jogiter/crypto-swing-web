@@ -48,6 +48,19 @@ python run_analysis.py
 `.github/workflows/daily-analysis.yml`：每天 00:15 UTC（北京时间 08:15）运行，也可在 Actions 页手动触发
 （workflow_dispatch）。运行结果自动 commit 回 `main`。
 
+## 主观层：AI 分析方案
+
+`docs/data/playbook.json` 承载 skill 报告里的做多方案（分批入场、多层止损、
+分批止盈、多口径风险回报比、加仓硬条件），页面以「AI 分析方案」区块渲染，
+与机械层视觉区分。
+
+它是**可选**的——缺失、损坏或过期都不影响机械层显示。页面按三条线判定时效：
+现价跌破最后一层止损即标记作废并摊开机械版兜底；偏离锚定价 ≥5% 或生成超过
+48 小时则给出提示。
+
+字段定义见 [PLAYBOOK.md](PLAYBOOK.md)，可执行校验在 `analyzer/playbook_schema.py`。
+目前为手工放置的样本（取自 2026-08-26 报告），上游自动写入通道尚未打通。
+
 ## 与 crypto-swing-analysis skill 的边界
 
 本项目自动化的是 skill 中**可机械计算**的部分。仍需人工判断（或在 Claude 中运行该 skill）的有：

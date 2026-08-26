@@ -12,6 +12,7 @@
   --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
   --good-text:#006300;
   --accent:#2a78d6; --accent-2:#256abf;
+  --human:#7c4dbe; --human-soft:#f1ebfa;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -19,6 +20,8 @@
     --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
     --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,.10);
     --good-text:#0ca30c; --accent:#3987e5; --accent-2:#3987e5;
+  --human:#b18cf0; --human-soft:#241c33;
+    --human:#b18cf0; --human-soft:#241c33;
   }
 }
 :root[data-theme="dark"]{
@@ -80,6 +83,33 @@ table.klv th:first-child,table.klv td:first-child{text-align:left}
 table.klv tbody tr:last-child td{border-bottom:none}
 table.klv .coin{font-weight:700}
 table.klv .dist{color:var(--muted);font-size:11px;display:block;font-weight:400}
+/* 做多方案（主观层）——来自 AI 分析，与机械计算显著区分 */
+.hplan{margin-top:10px;border:1px solid var(--human);border-radius:10px;overflow:hidden}
+.hplan>summary{list-style:none;cursor:pointer;padding:10px 12px;background:var(--human-soft);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hplan>summary::-webkit-details-marker{display:none}
+.hplan .tag-ai{font-size:11px;padding:1px 7px;border-radius:999px;
+  border:1px solid var(--human);color:var(--human);white-space:nowrap;font-weight:600}
+.hplan .body{padding:10px 12px}
+.hplan.void{opacity:.62}
+.bar{padding:7px 12px;font-size:12.5px;line-height:1.5}
+.bar.warn{background:color-mix(in srgb,var(--warning) 18%,transparent);
+  border-bottom:1px solid var(--border)}
+.bar.void{background:color-mix(in srgb,var(--critical) 15%,transparent);
+  border-bottom:1px solid var(--border);color:var(--critical);font-weight:600}
+@supports not (background:color-mix(in srgb,red 5%,transparent)){
+  .bar.warn{background:var(--grid)} .bar.void{background:var(--grid)}
+}
+.prow{display:flex;justify-content:space-between;gap:10px;padding:4px 0;
+  border-bottom:1px solid var(--grid);font-size:13px}
+.prow:last-child{border-bottom:none}
+.prow .pk{color:var(--ink-2);flex:1 1 auto}
+.prow .pv{font-variant-numeric:tabular-nums;font-weight:600;text-align:right;white-space:nowrap}
+.prow .sub{display:block;color:var(--muted);font-size:11px;font-weight:400}
+.sec-t{font-size:12px;font-weight:700;color:var(--ink-2);margin:10px 0 2px}
+.sec-t:first-child{margin-top:0}
+.mech-fold{margin-top:8px}
+.mech-fold>summary{cursor:pointer;font-size:12px;color:var(--muted);padding:2px 0}
 /* 做多方案（机械层）——与机械计算区块视觉区分 */
 .pbk{margin-top:10px;padding:10px 12px;border-left:3px solid var(--accent);
   background:var(--grid);border-radius:0 8px 8px 0}
@@ -174,7 +204,16 @@ function compTable(sc){
     `<tr><td>${n}</td><td>${o.score}/${o.max}</td><td>${esc(note)}</td></tr>`).join("") +
   `</table></details>`;
 }
-function coinCard(name, cd){
+function planSection(coin, cd, pb){
+  const human = humanPlanHtml(coin, pb, cd.price ?? cd.frames?.["4h"]?.close);
+  const mech = playbookHtml(cd.playbook);
+  if(!human) return mech;
+  const st = planStatus(pb, coin, cd.price ?? cd.frames?.["4h"]?.close);
+  // 主观层作废时把机械层摊开当兜底，否则收进折叠避免两套方案抢注意力
+  if(st && st.level === "void") return human + mech;
+  return human + (mech ? `<details class="mech-fold"><summary>机械版方案（规则派生，兜底参考）</summary>${mech}</details>` : "");
+}
+function coinCard(name, cd, pb){
   const f4 = cd.frames?.["4h"], sc4 = f4?.score;
   let tfrows = "";
   for(const tf of ["4h","1d","1w","1M"]){
@@ -193,7 +232,7 @@ function coinCard(name, cd){
     ${compTable(sc4)}
     <div class="levels">${levelsHtml(f4?.levels)}</div>
     ${geometryHtml(cd.geometry)}
-    ${playbookHtml(cd.playbook)}
+    ${planSection(name, cd, pb)}
   </div>`;
 }
 function keyLevelsCard(d){
@@ -239,6 +278,125 @@ function keyLevelsCard(d){
       <thead><tr><th>币种</th><th>现价</th>${head}</tr></thead>
       <tbody>${rows}</tbody>
     </table></div></div>`;
+}
+// ---- 主观层（AI 分析方案）----
+// 时效判定：三条线，从重到轻。止损被击穿最严重——方案的前提已经不成立。
+const DRIFT_WARN_PCT = 5;      // 价格偏离锚定价超过此值 → 提示重新评估
+const AGE_WARN_HOURS = 48;     // 生成时间超过此值 → 提示可能过期
+
+function planStatus(pb, coin, price){
+  const out = {level:"fresh", msgs:[]};
+  if(!pb) return null;
+  const cp = pb.coins?.[coin];
+  if(!cp) return null;
+
+  const anchor = pb.price_anchor?.[coin];
+  const ts = pb.generated_at_utc ? new Date(pb.generated_at_utc) : null;
+  const ageH = ts && !isNaN(ts) ? (Date.now()-ts.getTime())/36e5 : null;
+
+  // 1) 最终止损被击穿 —— 方案作废
+  const stops = (cp.stops||[]).filter(x=>typeof x.price==="number");
+  const finalStop = stops.length ? stops.reduce((a,b)=>(b.level??0)>(a.level??0)?b:a) : null;
+  if(finalStop && price != null && price < finalStop.price){
+    out.level = "void";
+    out.msgs.push(`现价已跌破${esc(finalStop.name)} $${fp(finalStop.price)}——方案前提不再成立，勿按此执行`);
+  }
+
+  // 2) 价格走离锚定价
+  if(anchor && price != null){
+    const drift = (price/anchor-1)*100;
+    if(Math.abs(drift) >= DRIFT_WARN_PCT){
+      if(out.level==="fresh") out.level = "stale";
+      out.msgs.push(`价格较方案锚定价 $${fp(anchor)} 已${drift>=0?"上行":"下行"} ${Math.abs(drift).toFixed(1)}%，点位需重新评估`);
+    }
+  }
+
+  // 3) 时间过久
+  if(ageH != null && ageH >= AGE_WARN_HOURS){
+    if(out.level==="fresh") out.level = "stale";
+    out.msgs.push(`方案生成于 ${Math.floor(ageH)} 小时前`);
+  }
+  if(ageH != null) out.ageH = ageH;
+  return out;
+}
+
+function planRows(items, render){
+  return (items||[]).map(render).join("");
+}
+
+function humanPlanHtml(coin, pb, price){
+  const st = planStatus(pb, coin, price);
+  if(!st) return "";
+  const cp = pb.coins[coin];
+  const when = pb.generated_at_utc ? new Date(pb.generated_at_utc) : null;
+  const whenTxt = when && !isNaN(when)
+    ? when.toLocaleString("zh-CN",{timeZone:"Asia/Shanghai",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"})
+    : (pb.report_date||"");
+
+  const bars = st.msgs.map(m=>
+    `<div class="bar ${st.level==="void"?"void":"warn"}">${st.level==="void"?"⛔ ":"⚠️ "}${m}</div>`).join("");
+
+  let body = "";
+  const conf = `信心 ${esc(cp.confidence||"")}`;
+  if(cp.confidence_reason)
+    body += `<div class="note" style="margin:0 0 8px">${esc(cp.confidence_reason)}</div>`;
+
+  if(cp.entry_batches?.length){
+    body += `<div class="sec-t">分批入场</div>` + planRows(cp.entry_batches, b=>
+      `<div class="prow"><span class="pk">第 ${b.batch} 批 ${b.ideal?'<b style="color:var(--human)">· 理想加仓位</b>':""}
+        <span class="sub">${esc(b.basis||"")}</span></span>
+        <span class="pv">$${fp(b.low)} – $${fp(b.high)}<span class="sub">${b.weight_pct}% 计划仓</span></span></div>`);
+  }
+  if(cp.breakout_entry){
+    body += `<div class="sec-t">突破式入场（替代方案）</div>
+      <div class="prow"><span class="pk">${esc(cp.breakout_entry.condition||"")}
+        <span class="sub">${esc(cp.breakout_entry.note||"")}</span></span></div>`;
+  }
+  if(cp.stops?.length){
+    body += `<div class="sec-t">多层止损</div>` + planRows(cp.stops, x=>
+      `<div class="prow"><span class="pk">${esc(x.name||"")}
+        <span class="sub">${esc(x.trigger||"")}${x.basis?` · ${esc(x.basis)}`:""}</span></span>
+        <span class="pv down">$${fp(x.price)}<span class="sub">${esc(x.action||"")}</span></span></div>`);
+  }
+  if(cp.targets?.length){
+    body += `<div class="sec-t">分批止盈</div>` + planRows(cp.targets, t=>
+      `<div class="prow"><span class="pk">${esc(t.name||"")}
+        <span class="sub">${esc(t.basis||"")}${t.note?` · ${esc(t.note)}`:""}</span></span>
+        <span class="pv up">$${fp(t.price)}<span class="sub">减 ${t.reduce_pct}%</span></span></div>`);
+    if(cp.trailing)
+      body += `<div class="prow"><span class="pk">剩余转移动止盈<span class="sub">${esc(cp.trailing.note||"")}</span></span>
+        <span class="pv">${cp.trailing.remain_pct}%</span></div>`;
+  }
+  if(cp.risk_reward?.length){
+    body += `<div class="sec-t">风险回报比</div>` + planRows(cp.risk_reward, r=>{
+      const mark = r.verdict==="optimal" ? ' <b style="color:var(--good-text)">← 最优执行</b>'
+                 : r.verdict==="not_recommended" ? ' <b class="down">← 不推荐</b>' : "";
+      return `<div class="prow"><span class="pk">${esc(r.label||"")}${mark}
+        <span class="sub">入场 $${fp(r.entry)} / 止损 $${fp(r.stop)} / 目标 $${fp(r.target)}</span></span>
+        <span class="pv">${r.ratio} : 1</span></div>`;
+    });
+    if(cp.rr_note) body += `<div class="note">${esc(cp.rr_note)}</div>`;
+  }
+  body += `<div class="sec-t">仓位权重</div>
+    <div class="prow"><span class="pk">${esc(cp.position_note||"占加密波段总仓")}</span>
+      <span class="pv">${cp.position_pct}%</span></div>`;
+
+  const ac = pb.add_conditions;
+  if(ac?.items?.length){
+    body += `<div class="sec-t">加仓硬条件（${esc(ac.require||"")}）<span style="font-weight:400;color:var(--muted)"> ${esc(ac.goal||"")}</span></div><ul>`;
+    for(const it of ac.items)
+      body += `<li>${esc(it.condition)}${it.note?` <span style="color:var(--muted)">— ${esc(it.note)}</span>`:""}</li>`;
+    body += `</ul>`;
+    if(ac.partial_note) body += `<div class="note">${esc(ac.partial_note)}</div>`;
+  }
+
+  return `<details class="hplan ${st.level==="void"?"void":""}" ${st.level==="void"?"":"open"}>
+    <summary><span class="tag-ai">AI 分析方案</span>
+      <b>${esc(cp.bias||"")}${cp.bias_note?`（${esc(cp.bias_note)}）`:""}</b>
+      <span>${conf}</span>
+      <span class="lab" style="margin-left:auto;color:var(--muted);font-weight:400">${esc(whenTxt)}</span>
+    </summary>
+    ${bars}<div class="body">${body}</div></details>`;
 }
 function playbookHtml(pb){
   if(!pb || !pb.confidence) return "";
@@ -387,8 +545,15 @@ async function main(){
   if(d.macro?.regime?.etf_note) tl.push(esc(d.macro.regime.etf_note));
   if(tl.length){ $("#tldr").hidden = false; $("#tldr").innerHTML = tl.map(x=>`<div>${x}</div>`).join(""); }
   // coins
+  // 主观层：独立文件，缺失或损坏都不影响机械层渲染
+  let pb = null;
+  try{
+    const r = await fetch("data/playbook.json", {cache:"no-store"});
+    if(r.ok) pb = await r.json();
+  }catch(e){ pb = null; }
+
   $("#keylevels").innerHTML = keyLevelsCard(d);
-  $("#coins").innerHTML = ["BTC","ETH","SOL"].map(c => d.coins?.[c] ? coinCard(c, d.coins[c]) : "").join("");
+  $("#coins").innerHTML = ["BTC","ETH","SOL"].map(c => d.coins?.[c] ? coinCard(c, d.coins[c], pb) : "").join("");
   $("#aux").innerHTML = cycleCard(d) + macroCard(d) + conditionsCard(d.trigger_conditions);
   // footer
   $("#foot").innerHTML = esc(d.disclaimer||"") +
