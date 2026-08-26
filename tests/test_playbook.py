@@ -198,3 +198,36 @@ def test_condition_prices_are_thousands_formatted():
     assert "$101,000" in text
     assert "$105,000" in text
     assert "101000.0" not in text and "105000.0" not in text
+
+
+# ---------------- 入场档次序（真实数据回归） ----------------
+
+def test_entry_zones_strictly_descending_and_non_overlapping():
+    """真实数据回归：贴近现价的支撑曾算出比现价档更高的区间。"""
+    frame = _frame(close=79098.0)
+    frame["levels"] = {
+        "supports": [{"price": 78800.0, "basis": "前高"},    # 极贴近现价
+                     {"price": 78045.0, "basis": "EMA20"}],
+        "resistances": [{"price": 79511.0, "basis": "前高"}],
+    }
+    geo = {"entry_ref": 79098.0, "stops": [{"name": "最终止损", "price": 77762.0, "basis": "x"}]}
+    pb = _build(frame4h=frame, geometry=geo, atr_abs=1248.0, atr_pct=1.58)
+    zones = pb["entry_zones"]
+    for a, b in zip(zones, zones[1:]):
+        assert b["high"] <= a["low"], f"{b['name']} 上沿 {b['high']} 高于 {a['name']} 下沿 {a['low']}"
+        assert b["low"] < b["high"]
+    assert zones[0]["high"] == 79098
+
+
+def test_entry_zone_swallowed_by_previous_is_dropped():
+    """支撑几乎贴着现价时，该档没有独立意义，应被丢弃而非产出倒挂区间。"""
+    frame = _frame(close=100000.0)
+    frame["levels"] = {"supports": [{"price": 99990.0, "basis": "紧贴"}], "resistances": []}
+    pb = _build(frame4h=frame, atr_abs=2000.0)
+    assert len(pb["entry_zones"]) == 1
+
+
+def test_entry_zones_never_exceed_reference_price():
+    pb = _build()
+    for z in pb["entry_zones"]:
+        assert z["high"] <= 100000.0

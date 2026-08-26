@@ -86,28 +86,43 @@ def _position(level, atr_pct):
 
 
 def _entry_zones(price, supports, atr):
-    """分批入场区间：现价档 + 支撑档，宽度由 ATR 决定。"""
+    """分批入场区间：现价档 + 逐级下移的支撑档，宽度由 ATR 决定。
+
+    各档必须严格递减且互不重叠——支撑档的上沿被前一档的下沿封住，
+    否则贴近现价的支撑会算出比「现价档」还高的区间，读起来像是要
+    在更高的位置挂回调单。与前一档几乎重合的档位直接丢弃。
+    """
     if not price:
         return []
     band = (atr or price * 0.005) * 0.5
+    prev_low = price - band
     zones = [{
         "name": "第一档（现价区）",
-        "low": _round_price(price - band),
+        "low": _round_price(prev_low),
         "high": _round_price(price),
         "note": "右侧参与",
     }]
+
     below = sorted([s for s in supports if s.get("price", 0) < price],
                    key=lambda s: -s["price"])
     labels = ["第二档（第一支撑区）", "第三档（次级支撑区）"]
     notes = ["理想加仓位", "深跌承接位"]
-    for i, s in enumerate(below[:2]):
+    for s in below:
+        if len(zones) > 2:
+            break
         p = s["price"]
+        high = min(p + band * 0.6, prev_low)
+        low = p - band * 0.6
+        if high - low < band * 0.2:   # 已被上一档覆盖，无独立意义
+            continue
+        i = len(zones) - 1
         zones.append({
             "name": labels[i],
-            "low": _round_price(p - band * 0.6),
-            "high": _round_price(p + band * 0.6),
+            "low": _round_price(low),
+            "high": _round_price(high),
             "note": f"{notes[i]}（{s.get('basis', '支撑')}）",
         })
+        prev_low = low
     return zones
 
 
