@@ -2,3 +2,7 @@ __pycache__/
 *.pyc
 .venv/
 .pytest_cache/
+
+# 探针输出，含真实调用产物，不入库
+qiniu-probe-*.json
+qiniu-probe-raw.txt
