@@ -1,0 +1,1531 @@
+{
+ "generated_at_utc": "2026-10-12T05:50:43+00:00",
+ "generated_at_beijing": "2026-10-12 13:50 (北京时间)",
+ "date": "2026-10-12",
+ "coins": {
+  "BTC": {
+   "frames": {
+    "4h": {
+     "close": 83884.3,
+     "bar_time_utc": "2026-10-12T04:00:00+00:00",
+     "score": {
+      "srsi": {
+       "k": 87.2,
+       "d": 86.5,
+       "score": 15.0,
+       "max": 25
+      },
+      "macd": {
+       "dif": 41.95,
+       "dea": -149.6,
+       "hist": 191.55,
+       "score": 25.0,
+       "max": 25
+      },
+      "mfi": {
+       "value": 84.0,
+       "score": 9.0,
+       "max": 20
+      },
+      "volume": {
+       "ratio_vs_ma20": 1.4,
+       "score": 9.6,
+       "max": 15
+      },
+      "supertrend": {
+       "direction": "空",
+       "line": 83914.51,
+       "score": 0.0,
+       "max": 15
+      },
+      "adx": {
+       "value": 20.9,
+       "plus_di": 26.6,
+       "minus_di": 17.8,
+       "trend_strength": "有趋势"
+      },
+      "total": 58.6,
+      "signal": "观望"
+     },
+     "levels": {
+      "supports": [
+       {
+        "price": 81879.0,
+        "basis": "EMA200"
+       },
+       {
+        "price": 80164.0,
+        "basis": "整数关口+前低"
+       },
+       {
+        "price": 70000.0,
+        "basis": "整数关口"
+       }
+      ],
+      "resistances": [
+       {
+        "price": 85361.0,
+        "basis": "前高+前低"
+       },
+       {
+        "price": 87152.0,
+        "basis": "前高"
+       },
+       {
+        "price": 90000.0,
+        "basis": "整数关口"
+       }
+      ]
+     },
+     "n_bars": 721,
+     "atr": 588.6,
+     "atr_pct": 0.7
+    },
+    "1d": {
+     "close": 83884.3,
+     "bar_time_utc": "2026-10-12T00:00:00+00:00",
+     "score": {
+      "srsi": {
+       "k": 31.1,
+       "d": 22.3,
+       "score": 21.2,
+       "max": 25
+      },
+      "macd": {
+       "dif": 867.51,
+       "dea": 1316.88,
+       "hist": -449.37,
+       "score": 7.5,
+       "max": 25
+      },
+      "mfi": {
+       "value": 51.8,
+       "score": 10.0,
+       "max": 20
+      },
+      "volume": {
+       "ratio_vs_ma20": 0.27,
+       "score": 2.8,
+       "max": 15
+      },
+      "supertrend": {
+       "direction": "多",
+       "line": 79618.6,
+       "score": 15.0,
+       "max": 15
+      },
+      "adx": {
+       "value": 33.1,
+       "plus_di": 26.1,
+       "minus_di": 19.4,
+       "trend_strength": "强趋势"
+      },
+      "total": 56.5,
+      "signal": "观望"
+     },
+     "levels": {
+      "supports": [
+       {
+        "price": 82220.0,
+        "basis": "前高+前低"
+       },
+       {
+        "price": 80186.0,
+        "basis": "前高+整数关口+EMA50+前低"
+       },
+       {
+        "price": 76500.0,
+        "basis": "前低+EMA200+EMA100"
+       }
+      ],
+      "resistances": [
+       {
+        "price": 87338.0,
+        "basis": "前高"
+       },
+       {
+        "price": 90000.0,
+        "basis": "整数关口"
+       },
+       {
+        "price": 100000.0,
+        "basis": "整数关口"
+       }
+      ]
+     },
+     "n_bars": 721,
+     "change_5d_pct": 0.73,
+     "change_30d_pct": 8.57
+    },
+    "1w": {
+     "close": 83884.3,
+     "bar_time_utc": "2026-10-08T00:00:00+00:00",
+     "score": {
+      "srsi": {
+       "k": 95.4,
+       "d": 95.2,
+       "score": 16.2,
+       "max": 25
+      },
+      "macd": {
+       "dif": 2066.54,
+       "dea": -498.26,
+       "hist": 2564.8,
+       "score": 20.0,
+       "max": 25
+      },
+      "mfi": {
+       "value": 76.4,
+       "score": 13.0,
+       "max": 20
+      },
+      "volume": {
+       "ratio_vs_ma20": 0.51,
+       "score": 4.3,
+       "max": 15
+      },
+      "supertrend": {
+       "direction": "多",
+       "line": 67265.07,
+       "score": 15.0,
+       "max": 15
+      },
+      "adx": {
+       "value": 27.3,
+       "plus_di": 28.5,
+       "minus_di": 17.5,
+       "trend_strength": "强趋势"
+      },
+      "total": 68.5,
+      "signal": "观望"
+     },
+     "levels": {
+      "supports": [
+       {
+        "price": 79971.0,
+        "basis": "EMA50+EMA100+整数关口+前低"
+       },
+       {
+        "price": 76056.0,
+        "basis": "前低+EMA20+前高"
+       },
+       {
+        "price": 69902.0,
+        "basis": "EMA200+前高+整数关口"
+       }
+      ],
+      "resistances": [
+       {
+        "price": 99044.0,
+        "basis": "前高+前低+整数关口"
+       },
+       {
+        "price": 108444.0,
+        "basis": "前低+前高"
+       },
+       {
+        "price": 124989.0,
+        "basis": "前高"
+       }
+      ]
+     },
+     "n_bars": 680,
+     "ma200w": 66899.0,
+     "price_over_ma200w": 1.254,
+     "ema20w": 75578.36
+    },
+    "1M": {
+     "close": 83884.3,
+     "bar_time_utc": "2026-10-01T00:00:00+00:00",
+     "score": {
+      "srsi": {
+       "k": 17.7,
+       "d": 11.9,
+       "score": 25.0,
+       "max": 25
+      },
+      "macd": {
+       "dif": -2177.37,
+       "dea": -950.7,
+       "hist": -1226.67,
+       "score": 7.5,
+       "max": 25
+      },
+      "mfi": {
+       "value": 38.6,
+       "score": 10.0,
+       "max": 20
+      },
+      "volume": {
+       "ratio_vs_ma20": 0.47,
+       "score": 4.0,
+       "max": 15
+      },
+      "supertrend": {
+       "direction": "空",
+       "line": 108079.82,
+       "score": 0.0,
+       "max": 15
+      },
+      "adx": {
+       "value": 37.5,
+       "plus_di": 20.6,
+       "minus_di": 17.8,
+       "trend_strength": "强趋势"
+      },
+      "total": 46.5,
+      "signal": "观望"
+     },
+     "levels": {
+      "supports": [
+       {
+        "price": 81629.0,
+        "basis": "整数关口+EMA20+前高"
+       },
+       {
+        "price": 74409.0,
+        "basis": "前低"
+       },
+       {
+        "price": 70000.0,
+        "basis": "整数关口"
+       }
+      ],
+      "resistances": [
+       {
+        "price": 90000.0,
+        "basis": "整数关口"
+       },
+       {
+        "price": 100000.0,
+        "basis": "整数关口"
+       },
+       {
+        "price": 109112.0,
+        "basis": "前高"
+       }
+      ]
+     },
+     "n_bars": 25
+    }
+   },
+   "sources": {
+    "4h": "Kraken",
+    "1d": "Kraken",
+    "1w": "Kraken",
+    "1M": "Kraken+月线聚合"
+   },
+   "key_pivots": {
+    "structural_line": {
+     "price": 66899.0,
+     "basis": "200 周均线",
+     "distance_pct": -20.25
+    }
+   },
+   "geometry": {
+    "entry_ref": 83884.0,
+    "entry_basis": "参考入场 = 当前价（本工具不判断入场时机，仅提供几何口径）",
+    "stops": [
+     {
+      "name": "结构止损",
+      "price": 81551.0,
+      "level": 81879.0,
+      "basis": "EMA200 下方 0.4%",
+      "distance_pct": -2.78
+     },
+     {
+      "name": "最终止损",
+      "price": 79865.0,
+      "level": 80186.0,
+      "basis": "前高+整数关口+EMA50+前低（大周期） 下方 0.4%",
+      "distance_pct": -4.79
+     }
+    ],
+    "targets": [
+     {
+      "name": "TP1",
+      "price": 85361.0,
+      "basis": "前高+前低",
+      "distance_pct": 1.76,
+      "plan": "减 1/3"
+     },
+     {
+      "name": "TP2",
+      "price": 87152.0,
+      "basis": "前高",
+      "distance_pct": 3.9,
+      "plan": "减 1/3"
+     },
+     {
+      "name": "TP3",
+      "price": 90000.0,
+      "basis": "整数关口",
+      "distance_pct": 7.29,
+      "plan": "剩余转移动止盈"
+     }
+    ],
+    "rr": {
+     "TP1": 0.63,
+     "TP2": 1.4,
+     "TP3": 2.62,
+     "TP1（最终止损口径）": 0.37
+    },
+    "notes": [],
+    "rr_basis": "口径：入场 83884.0 / 结构止损 81551.0 （风险 2.78%）/ 目标见 TP 各档"
+   },
+   "spot": {
+    "price": 83899,
+    "change_24h_pct": 1.1,
+    "source": "CoinGecko"
+   },
+   "price": 83899,
+   "change_5d_pct": 0.73,
+   "playbook": {
+    "layer": "mechanical",
+    "disclaimer": "本方案由确定性规则从已有指标派生，不含主观判断，非投资建议。",
+    "notes": [],
+    "confidence": {
+     "level": "中",
+     "score": 58.6,
+     "basis": "4H 评分 58.6"
+    },
+    "position": {
+     "pct": 18.0,
+     "basis": "信心「中」基准 12.0% × 波动调节 1.50（4H ATR 0.70% vs 基准 2.0%）"
+    },
+    "atr_pct": 0.7,
+    "entry_zones": [
+     {
+      "name": "第一档（现价区）",
+      "low": 83590.0,
+      "high": 83884.0,
+      "note": "右侧参与"
+     },
+     {
+      "name": "第二档（第一支撑区）",
+      "low": 81702.0,
+      "high": 82056.0,
+      "note": "理想加仓位（EMA200）"
+     },
+     {
+      "name": "第三档（次级支撑区）",
+      "low": 79987.0,
+      "high": 80341.0,
+      "note": "深跌承接位（整数关口+前低）"
+     }
+    ],
+    "add_conditions": {
+     "require": "全部满足",
+     "items": [
+      {
+       "condition": "4H 加权评分 ≥ 70（做多信号）",
+       "gap": "还差 11.4 分"
+      },
+      {
+       "condition": "4H SuperTrend 翻多",
+       "gap": "需 4H 收盘站上 $83,915"
+      },
+      {
+       "condition": "放量站上第一阻力 $85,361（前高+前低）",
+       "gap": "还需上涨 1.76%"
+      }
+     ]
+    },
+    "invalidation": {
+     "price": 79865.0,
+     "basis": "最终止损（前高+整数关口+EMA50+前低（大周期） 下方 0.4%）"
+    },
+    "structural_anchor": {
+     "name": "周线 200 周均线",
+     "price": 66899.0,
+     "ratio": 1.254
+    },
+    "signal_context": "4H 机械信号：观望（≥70 做多 / ≤30 离场）"
+   }
+  },
+  "ETH": {
+   "frames": {
+    "4h": {
+     "close": 2561.5,
+     "bar_time_utc": "2026-10-12T04:00:00+00:00",
+     "score": {
+      "srsi": {
+       "k": 100.0,
+       "d": 100.0,
+       "score": 3.8,
+       "max": 25
+      },
+      "macd": {
+       "dif": -7.92,
+       "dea": -20.91,
+       "hist": 12.98,
+       "score": 22.5,
+       "max": 25
+      },
+      "mfi": {
+       "value": 73.0,
+       "score": 16.0,
+       "max": 20
+      },
+      "volume": {
+       "ratio_vs_ma20": 1.37,
+       "score": 9.4,
+       "max": 15
+      },
+      "supertrend": {
+       "direction": "多",
+       "line": 2482.43,
+       "score": 15.0,
+       "max": 15
+      },
+      "adx": {
+       "value": 30.0,
+       "plus_di": 28.5,
+       "minus_di": 21.9,
+       "trend_strength": "强趋势"
+      },
+      "total": 66.7,
+      "signal": "观望"
+     },
+     "levels": {
+      "supports": [
+       {
+        "price": 2528.0,
+        "basis": "前高+EMA20+前低"
+       },
+       {
+        "price": 2498.0,
+        "basis": "前低+整数关口"
+       },
+       {
+        "price": 2471.0,
+        "basis": "前低"
+       }
+      ],
+      "resistances": [
+       {
+        "price": 2567.0,
+        "basis": "EMA200+EMA50"
+       },
+       {
+        "price": 2634.0,
+        "basis": "前低"
+       },
+       {
+        "price": 2658.0,
+        "basis": "前低"
+       }
+      ]
+     },
+     "n_bars": 721,
+     "atr": 24.91,
+     "atr_pct": 0.97
+    },
+    "1d": {
+     "close": 2561.5,
+     "bar_time_utc": "2026-10-12T00:00:00+00:00",
+     "score": {
+      "srsi": {
+       "k": 25.8,
+       "d": 15.7,
+       "score": 21.2,
+       "max": 25
+      },
+      "macd": {
+       "dif": -4.08,
+       "dea": 24.37,
+       "hist": -28.45,
+       "score": 7.5,
+       "max": 25
+      },
+      "mfi": {
+       "value": 46.0,
+       "score": 10.0,
+       "max": 20
+      },
+      "volume": {
+       "ratio_vs_ma20": 0.21,
+       "score": 2.5,
+       "max": 15
+      },
+      "supertrend": {
+       "direction": "空",
+       "line": 2750.14,
+       "score": 0.0,
+       "max": 15
+      },
+      "adx": {
+       "value": 31.0,
+       "plus_di": 23.8,
+       "minus_di": 24.8,
+       "trend_strength": "强趋势"
+      },
+      "total": 41.2,
+      "signal": "观望"
+     },
+     "levels": {
+      "supports": [
+       {
+        "price": 2556.0,
+        "basis": "前高"
+       },
+       {
+        "price": 2502.0,
+        "basis": "整数关口+EMA50"
+       },
+       {
+        "price": 2355.0,
+        "basis": "EMA100+前低"
+       }
+      ],
+      "resistances": [
+       {
+        "price": 2596.0,
+        "basis": "EMA20"
+       },
+       {
+        "price": 2653.0,
+        "basis": "前低+前高"
+       },
+       {
+        "price": 2792.0,
+        "basis": "前高"
+       }
+      ]
+     },
+     "n_bars": 721,
+     "change_5d_pct": -0.44,
+     "change_30d_pct": 1.43
+    },
+    "1w": {
+     "close": 2561.5,
+     "bar_time_utc": "2026-10-08T00:00:00+00:00",
+     "score": {
+      "srsi": {
+       "k": 87.8,
+       "d": 92.8,
+       "score": 3.8,
+       "max": 25
+      },
+      "macd": {
+       "dif": 86.76,
+       "dea": -8.09,
+       "hist": 94.85,
+       "score": 20.0,
+       "max": 25
+      },
+      "mfi": {
+       "value": 81.4,
+       "score": 9.0,
+       "max": 20
+      },
+      "volume": {
+       "ratio_vs_ma20": 0.64,
+       "score": 10.1,
+       "max": 15
+      },
+      "supertrend": {
+       "direction": "多",
+       "line": 1953.22,
+       "score": 15.0,
+       "max": 15
+      },
+      "adx": {
+       "value": 23.9,
+       "plus_di": 23.8,
+       "minus_di": 18.5,
+       "trend_strength": "有趋势"
+      },
+      "total": 57.9,
+      "signal": "观望"
+     },
+     "levels": {
+      "supports": [
+       {
+        "price": 2553.0,
+        "basis": "前低+EMA100"
+       },
+       {
+        "price": 2486.0,
+        "basis": "前高+EMA200+整数关口"
+       },
+       {
+        "price": 2136.0,
+        "basis": "前低"
+       }
+      ],
+      "resistances": [
+       {
+        "price": 2621.0,
+        "basis": "前低"
+       },
+       {
+        "price": 2716.0,
+        "basis": "前高"
+       },
+       {
+        "price": 2809.0,
+        "basis": "前高+前低"
+       }
+      ]
+     },
+     "n_bars": 584,
+     "ma200w": 2545.0,
+     "price_over_ma200w": 1.007,
+     "ema20w": 2315.85
+    },
+    "1M": {
+     "close": 2561.5,
+     "bar_time_utc": "2026-10-01T00:00:00+00:00",
+     "score": {
+      "srsi": {
+       "k": 16.8,
+       "d": 12.4,
+       "score": 25.0,
+       "max": 25
+      },
+      "macd": {
+       "dif": -120.66,
+       "dea": -91.07,
+       "hist": -29.59,
+       "score": 7.5,
+       "max": 25
+      },
+      "mfi": {
+       "value": 42.6,
+       "score": 7.0,
+       "max": 20
+      },
+      "volume": {
+       "ratio_vs_ma20": 0.41,
+       "score": 11.7,
+       "max": 15
+      },
+      "supertrend": {
+       "direction": "空",
+       "line": 3984.43,
+       "score": 0.0,
+       "max": 15
+      },
+      "adx": {
+       "value": 31.4,
+       "plus_di": 21.0,
+       "minus_di": 19.0,
+       "trend_strength": "强趋势"
+      },
+      "total": 51.2,
+      "signal": "观望"
+     },
+     "levels": {
+      "supports": [
+       {
+        "price": 2510.0,
+        "basis": "整数关口+EMA20"
+       },
+       {
+        "price": 2000.0,
+        "basis": "整数关口"
+       },
+       {
+        "price": 1745.0,
+        "basis": "前低"
+       }
+      ],
+      "resistances": [
+       {
+        "price": 3000.0,
+        "basis": "整数关口"
+       },
+       {
+        "price": 3500.0,
+        "basis": "整数关口"
+       },
+       {
+        "price": 4956.0,
+        "basis": "前高"
+       }
+      ]
+     },
+     "n_bars": 25
+    }
+   },
+   "sources": {
+    "4h": "Kraken",
+    "1d": "Kraken",
+    "1w": "Kraken",
+    "1M": "Kraken+月线聚合"
+   },
+   "key_pivots": {
+    "structural_line": {
+     "price": 2545.0,
+     "basis": "200 周均线",
+     "distance_pct": -0.64
+    }
+   },
+   "geometry": {
+    "entry_ref": 2562.0,
+    "entry_basis": "参考入场 = 当前价（本工具不判断入场时机，仅提供几何口径）",
+    "stops": [
+     {
+      "name": "结构止损",
+      "price": 2518.0,
+      "level": 2528.0,
+      "basis": "前高+EMA20+前低 下方 0.4%",
+      "distance_pct": -1.7
+     },
+     {
+      "name": "最终止损",
+      "price": 2492.0,
+      "level": 2502.0,
+      "basis": "整数关口+EMA50（大周期） 下方 0.4%",
+      "distance_pct": -2.71
+     }
+    ],
+    "targets": [
+     {
+      "name": "TP1",
+      "price": 2567.0,
+      "basis": "EMA200+EMA50",
+      "distance_pct": 0.21,
+      "plan": "减 1/3"
+     },
+     {
+      "name": "TP2",
+      "price": 2634.0,
+      "basis": "前低",
+      "distance_pct": 2.83,
+      "plan": "减 1/3"
+     },
+     {
+      "name": "TP3",
+      "price": 2658.0,
+      "basis": "前低",
+      "distance_pct": 3.77,
+      "plan": "剩余转移动止盈"
+     }
+    ],
+    "rr": {
+     "TP1": 0.13,
+     "TP2": 1.67,
+     "TP3": 2.22,
+     "TP1（最终止损口径）": 0.08
+    },
+    "notes": [],
+    "rr_basis": "口径：入场 2562.0 / 结构止损 2518.0 （风险 1.70%）/ 目标见 TP 各档"
+   },
+   "spot": {
+    "price": 2561.14,
+    "change_24h_pct": 2.34,
+    "source": "CoinGecko"
+   },
+   "price": 2561.14,
+   "change_5d_pct": -0.44,
+   "playbook": {
+    "layer": "mechanical",
+    "disclaimer": "本方案由确定性规则从已有指标派生，不含主观判断，非投资建议。",
+    "notes": [],
+    "confidence": {
+     "level": "中高",
+     "score": 71.7,
+     "basis": "4H 评分 66.7；强趋势且 SuperTrend 多 +5"
+    },
+    "position": {
+     "pct": 27.0,
+     "basis": "信心「中高」基准 18.0% × 波动调节 1.50（4H ATR 0.97% vs 基准 2.0%）"
+    },
+    "atr_pct": 0.97,
+    "entry_zones": [
+     {
+      "name": "第一档（现价区）",
+      "low": 2550.0,
+      "high": 2562.0,
+      "note": "右侧参与"
+     },
+     {
+      "name": "第二档（第一支撑区）",
+      "low": 2521.0,
+      "high": 2535.0,
+      "note": "理想加仓位（前高+EMA20+前低）"
+     },
+     {
+      "name": "第三档（次级支撑区）",
+      "low": 2491.0,
+      "high": 2505.0,
+      "note": "深跌承接位（前低+整数关口）"
+     }
+    ],
+    "add_conditions": {
+     "require": "全部满足",
+     "items": [
+      {
+       "condition": "4H 加权评分 ≥ 70（做多信号）",
+       "gap": "还差 3.3 分"
+      },
+      {
+       "condition": "放量站上第一阻力 $2,567（EMA200+EMA50）",
+       "gap": "还需上涨 0.21%"
+      }
+     ]
+    },
+    "invalidation": {
+     "price": 2492.0,
+     "basis": "最终止损（整数关口+EMA50（大周期） 下方 0.4%）"
+    },
+    "signal_context": "4H 机械信号：观望（≥70 做多 / ≤30 离场）"
+   }
+  },
+  "SOL": {
+   "frames": {
+    "4h": {
+     "close": 112.76,
+     "bar_time_utc": "2026-10-12T04:00:00+00:00",
+     "score": {
+      "srsi": {
+       "k": 94.3,
+       "d": 92.2,
+       "score": 15.0,
+       "max": 25
+      },
+      "macd": {
+       "dif": -0.76,
+       "dea": -1.4,
+       "hist": 0.64,
+       "score": 22.5,
+       "max": 25
+      },
+      "mfi": {
+       "value": 73.9,
+       "score": 16.0,
+       "max": 20
+      },
+      "volume": {
+       "ratio_vs_ma20": 1.09,
+       "score": 7.7,
+       "max": 15
+      },
+      "supertrend": {
+       "direction": "空",
+       "line": 113.25,
+       "score": 0.0,
+       "max": 15
+      },
+      "adx": {
+       "value": 28.6,
+       "plus_di": 26.9,
+       "minus_di": 23.9,
+       "trend_strength": "强趋势"
+      },
+      "total": 61.2,
+      "signal": "观望"
+     },
+     "levels": {
+      "supports": [
+       {
+        "price": 112.2,
+        "basis": "前高+前低"
+       },
+       {
+        "price": 111.25,
+        "basis": "前高+EMA20+EMA200"
+       },
+       {
+        "price": 108.6,
+        "basis": "前低"
+       }
+      ],
+      "resistances": [
+       {
+        "price": 116.91,
+        "basis": "前低"
+       },
+       {
+        "price": 118.91,
+        "basis": "前低"
+       },
+       {
+        "price": 119.81,
+        "basis": "前高+前低"
+       }
+      ]
+     },
+     "n_bars": 721,
+     "atr": 1.54,
+     "atr_pct": 1.37
+    },
+    "1d": {
+     "close": 112.76,
+     "bar_time_utc": "2026-10-12T00:00:00+00:00",
+     "score": {
+      "srsi": {
+       "k": 18.1,
+       "d": 9.5,
+       "score": 25.0,
+       "max": 25
+      },
+      "macd": {
+       "dif": 0.94,
+       "dea": 2.66,
+       "hist": -1.72,
+       "score": 7.5,
+       "max": 25
+      },
+      "mfi": {
+       "value": 37.6,
+       "score": 10.0,
+       "max": 20
+      },
+      "volume": {
+       "ratio_vs_ma20": 0.21,
+       "score": 2.4,
+       "max": 15
+      },
+      "supertrend": {
+       "direction": "多",
+       "line": 107.26,
+       "score": 15.0,
+       "max": 15
+      },
+      "adx": {
+       "value": 31.2,
+       "plus_di": 23.6,
+       "minus_di": 22.6,
+       "trend_strength": "强趋势"
+      },
+      "total": 59.9,
+      "signal": "观望"
+     },
+     "levels": {
+      "supports": [
+       {
+        "price": 107.52,
+        "basis": "前高+EMA50"
+       },
+       {
+        "price": 105.64,
+        "basis": "前低+前高"
+       },
+       {
+        "price": 97.63,
+        "basis": "前低+EMA200"
+       }
+      ],
+      "resistances": [
+       {
+        "price": 114.08,
+        "basis": "EMA20"
+       },
+       {
+        "price": 116.33,
+        "basis": "前低"
+       },
+       {
+        "price": 124.32,
+        "basis": "前高"
+       }
+      ]
+     },
+     "n_bars": 721,
+     "change_5d_pct": -3.0,
+     "change_30d_pct": 10.82
+    },
+    "1w": {
+     "close": 112.76,
+     "bar_time_utc": "2026-10-08T00:00:00+00:00",
+     "score": {
+      "srsi": {
+       "k": 92.6,
+       "d": 95.6,
+       "score": 3.8,
+       "max": 25
+      },
+      "macd": {
+       "dif": 4.6,
+       "dea": -0.95,
+       "hist": 5.54,
+       "score": 20.0,
+       "max": 25
+      },
+      "mfi": {
+       "value": 55.1,
+       "score": 13.0,
+       "max": 20
+      },
+      "volume": {
+       "ratio_vs_ma20": 0.57,
+       "score": 10.6,
+       "max": 15
+      },
+      "supertrend": {
+       "direction": "多",
+       "line": 85.05,
+       "score": 15.0,
+       "max": 15
+      },
+      "adx": {
+       "value": 27.6,
+       "plus_di": 28.3,
+       "minus_di": 19.2,
+       "trend_strength": "强趋势"
+      },
+      "total": 62.4,
+      "signal": "观望"
+     },
+     "levels": {
+      "supports": [
+       {
+        "price": 112.41,
+        "basis": "前低+EMA200"
+       },
+       {
+        "price": 109.55,
+        "basis": "前低"
+       },
+       {
+        "price": 97.98,
+        "basis": "EMA20+前高"
+       }
+      ],
+      "resistances": [
+       {
+        "price": 117.55,
+        "basis": "前低+EMA100"
+       },
+       {
+        "price": 120.75,
+        "basis": "前低"
+       },
+       {
+        "price": 149.33,
+        "basis": "前高+整数关口"
+       }
+      ]
+     },
+     "n_bars": 278,
+     "ma200w": 112.0,
+     "price_over_ma200w": 1.008,
+     "ema20w": 97.29
+    },
+    "1M": {
+     "close": 112.76,
+     "bar_time_utc": "2026-10-01T00:00:00+00:00",
+     "score": {
+      "srsi": {
+       "k": 15.9,
+       "d": 10.5,
+       "score": 25.0,
+       "max": 25
+      },
+      "macd": {
+       "dif": -19.43,
+       "dea": -18.91,
+       "hist": -0.51,
+       "score": 7.5,
+       "max": 25
+      },
+      "mfi": {
+       "value": 45.1,
+       "score": 10.0,
+       "max": 20
+      },
+      "volume": {
+       "ratio_vs_ma20": 0.37,
+       "score": 11.9,
+       "max": 15
+      },
+      "supertrend": {
+       "direction": "空",
+       "line": 194.39,
+       "score": 0.0,
+       "max": 15
+      },
+      "adx": {
+       "value": 32.8,
+       "plus_di": 20.0,
+       "minus_di": 18.2,
+       "trend_strength": "强趋势"
+      },
+      "total": 54.4,
+      "signal": "观望"
+     },
+     "levels": {
+      "supports": [
+       {
+        "price": 100.0,
+        "basis": "整数关口"
+       },
+       {
+        "price": 95.17,
+        "basis": "前低"
+       },
+       {
+        "price": 67.4,
+        "basis": "前低"
+       }
+      ],
+      "resistances": [
+       {
+        "price": 121.1,
+        "basis": "EMA20"
+       },
+       {
+        "price": 150.0,
+        "basis": "整数关口"
+       },
+       {
+        "price": 200.0,
+        "basis": "整数关口"
+       }
+      ]
+     },
+     "n_bars": 25
+    }
+   },
+   "sources": {
+    "4h": "Kraken",
+    "1d": "Kraken",
+    "1w": "Kraken",
+    "1M": "Kraken+月线聚合"
+   },
+   "key_pivots": {
+    "structural_line": {
+     "price": 112.0,
+     "basis": "200 周均线",
+     "distance_pct": -0.67
+    }
+   },
+   "geometry": {
+    "entry_ref": 112.76,
+    "entry_basis": "参考入场 = 当前价（本工具不判断入场时机，仅提供几何口径）",
+    "stops": [
+     {
+      "name": "结构止损",
+      "price": 111.75,
+      "level": 112.2,
+      "basis": "前高+前低 下方 0.4%",
+      "distance_pct": -0.89
+     },
+     {
+      "name": "最终止损",
+      "price": 110.8,
+      "level": 111.25,
+      "basis": "前高+EMA20+EMA200 下方 0.4%",
+      "distance_pct": -1.73
+     }
+    ],
+    "targets": [
+     {
+      "name": "TP1",
+      "price": 116.91,
+      "basis": "前低",
+      "distance_pct": 3.68,
+      "plan": "减 1/3"
+     },
+     {
+      "name": "TP2",
+      "price": 118.91,
+      "basis": "前低",
+      "distance_pct": 5.45,
+      "plan": "减 1/3"
+     },
+     {
+      "name": "TP3",
+      "price": 119.81,
+      "basis": "前高+前低",
+      "distance_pct": 6.25,
+      "plan": "剩余转移动止盈"
+     }
+    ],
+    "rr": {
+     "TP1": 4.11,
+     "TP2": 6.09,
+     "TP3": 6.98,
+     "TP1（最终止损口径）": 2.12
+    },
+    "notes": [],
+    "rr_basis": "口径：入场 112.76 / 结构止损 111.75 （风险 0.90%）/ 目标见 TP 各档"
+   },
+   "spot": {
+    "price": 112.74,
+    "change_24h_pct": 3.05,
+    "source": "CoinGecko"
+   },
+   "price": 112.74,
+   "change_5d_pct": -3.0,
+   "playbook": {
+    "layer": "mechanical",
+    "disclaimer": "本方案由确定性规则从已有指标派生，不含主观判断，非投资建议。",
+    "notes": [],
+    "confidence": {
+     "level": "中",
+     "score": 53.2,
+     "basis": "4H 评分 61.2；强趋势但 SuperTrend 空 -8"
+    },
+    "position": {
+     "pct": 17.5,
+     "basis": "信心「中」基准 12.0% × 波动调节 1.46（4H ATR 1.37% vs 基准 2.0%）"
+    },
+    "atr_pct": 1.37,
+    "entry_zones": [
+     {
+      "name": "第一档（现价区）",
+      "low": 111.99,
+      "high": 112.76,
+      "note": "右侧参与"
+     },
+     {
+      "name": "第二档（第一支撑区）",
+      "low": 111.74,
+      "high": 111.99,
+      "note": "理想加仓位（前高+前低）"
+     },
+     {
+      "name": "第三档（次级支撑区）",
+      "low": 110.79,
+      "high": 111.71,
+      "note": "深跌承接位（前高+EMA20+EMA200）"
+     }
+    ],
+    "add_conditions": {
+     "require": "全部满足",
+     "items": [
+      {
+       "condition": "4H 加权评分 ≥ 70（做多信号）",
+       "gap": "还差 8.8 分"
+      },
+      {
+       "condition": "4H SuperTrend 翻多",
+       "gap": "需 4H 收盘站上 $113.25"
+      },
+      {
+       "condition": "放量站上第一阻力 $116.91（前低）",
+       "gap": "还需上涨 3.68%"
+      }
+     ]
+    },
+    "invalidation": {
+     "price": 110.8,
+     "basis": "最终止损（前高+EMA20+EMA200 下方 0.4%）"
+    },
+    "signal_context": "4H 机械信号：观望（≥70 做多 / ≤30 离场）"
+   }
+  }
+ },
+ "macro": {
+  "fear_greed": {
+   "value": 69,
+   "label": "Greed",
+   "history": [
+    {
+     "value": 69,
+     "ts": 1791763200
+    },
+    {
+     "value": 61,
+     "ts": 1791676800
+    },
+    {
+     "value": 64,
+     "ts": 1791590400
+    },
+    {
+     "value": 59,
+     "ts": 1791504000
+    },
+    {
+     "value": 64,
+     "ts": 1791417600
+    },
+    {
+     "value": 71,
+     "ts": 1791331200
+    },
+    {
+     "value": 73,
+     "ts": 1791244800
+    },
+    {
+     "value": 70,
+     "ts": 1791158400
+    }
+   ]
+  },
+  "indices": {
+   "SP500": {
+    "last": 7811.54,
+    "change_1d_pct": 0.59,
+    "change_5d_pct": 1.15
+   },
+   "NASDAQ": {
+    "last": 27366.17,
+    "change_1d_pct": 0.64,
+    "change_5d_pct": 0.64
+   },
+   "DOW": {
+    "last": 51654.95,
+    "change_1d_pct": 0.83,
+    "change_5d_pct": 0.93
+   }
+  },
+  "regime": {
+   "name": "无明显方向（震荡）",
+   "meaning": "加密与美股均未走出显著方向",
+   "action": "以 4H 信号灯为准，轻仓或观望",
+   "key": "neutral",
+   "confidence": "规则判定（阈值：BTC±3%/SPX±1%，5日）",
+   "etf_note": null,
+   "btc_5d_pct": 0.73,
+   "spx_5d_pct": 1.15
+  }
+ },
+ "btc_cycle": {
+  "power_law": {
+   "days_since_genesis": 6491,
+   "support": 79004.0,
+   "center": 197511.0,
+   "top": 790043.0,
+   "position_pct": 2.6,
+   "note": "幂律系数为公开近似拟合，仅供周期定位参考"
+  },
+  "ma200w": 66899.0,
+  "price_over_ma200w": 1.254,
+  "mvrv": {
+   "value": 1.553,
+   "date": "2026-10-11",
+   "zone": "中性区",
+   "history_days": 5930,
+   "percentile": 40.7,
+   "zscore_note": "社区版无市值/实现市值序列权限"
+  },
+  "cbbi": {
+   "value": 56.0,
+   "date": "2026-10-11",
+   "zone": "中性区(30-70)",
+   "value_30d_ago": 46.8,
+   "change_30d": 9.2
+  }
+ },
+ "missing": [
+  "etf_flows（etf flows unavailable）"
+ ],
+ "disclaimer": "本报告由开源脚本全自动生成，仅为量化指标快照，不含任何主观判断，不构成投资建议。数字资产风险极高，可能损失全部本金。下单前请以交易所实时行情二次确认。",
+ "triggers": [
+  "BTC 4H 加权评分 58.6 → 观望",
+  "ETH 4H 加权评分 66.7 → 观望",
+  "SOL 4H 加权评分 61.2 → 观望",
+  "BTC / 200周均线 = 1.254（高于200周均线）",
+  "恐惧贪婪指数 69（Greed）"
+ ],
+ "trigger_conditions": {
+  "offense": [
+   {
+    "condition": "BTC 4H 加权评分 ≥ 70（做多信号）",
+    "met": false,
+    "current": "当前 58.6/100",
+    "gap": "还差 11.4 分"
+   },
+   {
+    "condition": "BTC 4H SuperTrend 翻多",
+    "met": false,
+    "current": "当前为空，趋势线 $83,915",
+    "gap": "需 4H 收盘站上 $83,915"
+   },
+   {
+    "condition": "BTC 4H 放量站上第一阻力 $85,361（前高+前低）",
+    "met": false,
+    "current": "参考价 $83,884",
+    "gap": "还需上涨 1.76%"
+   },
+   {
+    "condition": "CBBI < 15（周期底部区）",
+    "met": false,
+    "current": "当前 56.0（中性区(30-70)）",
+    "gap": "需再降 41.0 点"
+   },
+   {
+    "condition": "MVRV < 1（历史底部区）",
+    "met": false,
+    "current": "当前 1.553，历史分位 40.7%",
+    "gap": "需再降 0.55"
+   },
+   {
+    "condition": "恐惧贪婪指数自极度恐惧区(<25)回升至 >30",
+    "met": false,
+    "current": "当前 69（Greed）",
+    "gap": "近8期未探入 <25，条件尚未起步"
+   }
+  ],
+  "defense": [
+   {
+    "condition": "BTC 4H 加权评分 ≤ 30（离场信号）",
+    "met": false,
+    "current": "当前 58.6/100",
+    "gap": "距触发还有 28.6 分空间"
+   },
+   {
+    "condition": "BTC 4H 失守第一支撑 $81,879（EMA200）",
+    "met": false,
+    "current": "参考价 $83,884",
+    "gap": "下跌 2.39% 即触发"
+   },
+   {
+    "condition": "BTC 周线失守 200 周均线 $66,899",
+    "met": false,
+    "current": "周线收盘 $83,884，价格/200周均线 = 1.254",
+    "gap": "需下跌 20.2% 才触及"
+   },
+   {
+    "condition": "CBBI ≥ 90（周期顶部预警）",
+    "met": false,
+    "current": "当前 56.0（中性区(30-70)）",
+    "gap": "还差 34.0 点"
+   },
+   {
+    "condition": "MVRV > 3（过热区）",
+    "met": false,
+    "current": "当前 1.553，历史分位 40.7%",
+    "gap": "还差 1.45"
+   },
+   {
+    "condition": "恐惧贪婪指数 > 75（极度贪婪）",
+    "met": false,
+    "current": "当前 69（Greed）",
+    "gap": "还差 6 点"
+   }
+  ]
+ },
+ "prev_compare": {
+  "prev_date": "2026-10-11",
+  "items": [
+   {
+    "coin": "BTC",
+    "price_prev": 82998,
+    "price_now": 83899,
+    "price_chg_pct": 1.09,
+    "score_prev": 40.9,
+    "score_now": 58.6,
+    "signal_prev": "观望",
+    "signal_now": "观望"
+   },
+   {
+    "coin": "ETH",
+    "price_prev": 2505.74,
+    "price_now": 2561.14,
+    "price_chg_pct": 2.21,
+    "score_prev": 40.9,
+    "score_now": 66.7,
+    "signal_prev": "观望",
+    "signal_now": "观望"
+   },
+   {
+    "coin": "SOL",
+    "price_prev": 109.49,
+    "price_now": 112.74,
+    "price_chg_pct": 2.97,
+    "score_prev": 38.0,
+    "score_now": 61.2,
+    "signal_prev": "观望",
+    "signal_now": "观望"
+   }
+  ]
+ }
+}
